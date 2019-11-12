@@ -10,8 +10,6 @@ ONBMetaDescription::ONBMetaDescription(ObjectProxy *object, QObject *parent) : A
     displayName = object->description().name;
     name = object->description().name;
 
-    qDebug() << name << typeName;
-
     bool ok;
     m_min = object->min().toDouble(&ok);
     if (ok) hasMin = true;
