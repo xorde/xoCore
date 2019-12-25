@@ -26,6 +26,9 @@ ComponentsConfigParser::ComponentsConfigParser(QString path, QObject *parent) : 
 
             auto document = QJsonDocument::fromJson(file.readAll());
             componentNames << document.object()["name"].toString();
+
+            file.close();
+
         }
     };
 

@@ -9,6 +9,8 @@
 #include <QFileInfo>
 #include <QTextCodec>
 
+#include "GlobalConsole.h"
+
 Scheme::Scheme()
 {
 
@@ -90,13 +92,43 @@ void Scheme::save(QString path)
     document.setObject(root);
 
     QFile file(path);    
-    file.open(QIODevice::WriteOnly);
 
-    QTextStream stream(&file);
-    stream.setCodec(QTextCodec::codecForName("UTF-8"));
-    stream << document.toJson();
+    if (!file.isWritable())
+    {
+        GlobalConsole::writeLine("Making scheme file writable " + path);
+        auto p = file.permissions();
+        p.setFlag(QFile::WriteOwner, true);
+//        p.setFlag(QFile::WriteOther, true);
+//        p.setFlag(QFile::WriteGroup, true);
+//        p.setFlag(QFile::WriteUser, true);
 
-    m_lastLoadedPath = path;
+        file.setPermissions(p);
+    }
+
+    if (!file.open(QIODevice::WriteOnly))
+    {
+        GlobalConsole::writeLine("Making scheme file writable again " + path);
+        auto p = file.permissions();
+        p.setFlag(QFile::WriteOwner, true);
+        p.setFlag(QFile::WriteOther, true);
+        p.setFlag(QFile::WriteGroup, true);
+        p.setFlag(QFile::WriteUser, true);
+        file.open(QIODevice::WriteOnly);
+    }
+
+
+    if (file.isOpen())
+    {
+        QTextStream stream(&file);
+        stream.setCodec(QTextCodec::codecForName("UTF-8"));
+        stream << document.toJson();
+
+        m_lastLoadedPath = path;
+    }
+    else
+    {
+        GlobalConsole::writeLine("Cannot write scheme into " + path);
+    }
 }
 
 bool Scheme::load(QString path)
@@ -116,6 +148,8 @@ bool Scheme::load(QString path)
 //    qDebug() << "Content" << content;
     QJsonDocument document = QJsonDocument::fromJson(content);
     fromJson(document.object());
+
+    file.close();
 
     m_lastLoadedPath = path;
 

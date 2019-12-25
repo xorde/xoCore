@@ -81,7 +81,7 @@ void Hub::addModule(ModuleProxyONB *module)
 
     m_moduleConnections << connect(module, &ModuleProxyONB::ready, [=]()
     {
-        GlobalConsole::writeLine(QString("MODULE READY ") + module->name());
+        //GlobalConsole::writeLine(QString("MODULE READY ") + module->name());
 
         emit moduleReady(module);
         emit componentAdded(module);
