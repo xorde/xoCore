@@ -40,7 +40,6 @@ public:
     Scheme *getScheme();
     Hub *getHub();
 
-
     void startApplication(QString applicationName);
     void killApplication(QString applicationName);
     bool applicationIsRunning(QString applicationName);
@@ -53,7 +52,6 @@ public:
 
     void loadCorePlugins();
     QMap<QString, xoCorePlugin*> getCorePlugins();
-
 
     ComponentInfo *createComponentInScheme(QString componentType, QString moduleName);
     bool removeComponentFromScheme(ComponentInfo* componentInfo);
@@ -79,6 +77,8 @@ private:
     QString getApplicationPath(QString applicationName);
 
     static Core* _instance;
+
+    QList<QMetaObject::Connection> m_connections;
 
     QMap<QString, QMetaObject::Connection> m_moduleConnectsModuleName;
 

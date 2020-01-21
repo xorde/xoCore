@@ -35,7 +35,7 @@ void Scheme::fromJson(const QJsonObject& in_obj)
         auto compInfo = ComponentInfo::fromJson(object);
         if (compInfo != nullptr)
         {
-            components << compInfo;
+            components.insert(compInfo->name, compInfo);
         }
     }
 
@@ -98,9 +98,6 @@ void Scheme::save(QString path)
         GlobalConsole::writeLine("Making scheme file writable " + path);
         auto p = file.permissions();
         p.setFlag(QFile::WriteOwner, true);
-//        p.setFlag(QFile::WriteOther, true);
-//        p.setFlag(QFile::WriteGroup, true);
-//        p.setFlag(QFile::WriteUser, true);
 
         file.setPermissions(p);
     }
@@ -145,7 +142,6 @@ bool Scheme::load(QString path)
         return false;
 
     auto content = file.readAll();
-//    qDebug() << "Content" << content;
     QJsonDocument document = QJsonDocument::fromJson(content);
     fromJson(document.object());
 
@@ -159,9 +155,10 @@ bool Scheme::load(QString path)
     return true;
 }
 
-void Scheme::addComponent(ComponentInfo *comp)
+void Scheme::addComponent(ComponentInfo *component)
 {
-    components.append(comp);
+    componentCountByModule[component->parentModule]++;
+    components.insert(component->name, component);
     emit componentsUpdated();    
 }
 
@@ -183,55 +180,47 @@ void Scheme::removeConnection(ComponentConnection *connection)
     emit connectionsUpdated();
 }
 
-ComponentInfo *Scheme::componentInfoByName(QString componentName)
+bool Scheme::containsModuleName(QString name)
 {
-    foreach(auto comp, components)
-    {
-        if (comp->name.compare(componentName, Qt::CaseInsensitive) == 0)
-        {           
-            return comp;            
-        }
-    }
-    return nullptr;
+    return componentCountByModule.contains(name);
 }
 
 bool Scheme::containsComponentName(QString name)
 {
-    return componentInfoByName(name) != nullptr;
+    return components.contains(name);
 }
 
 bool Scheme::renameComponentByName(QString componentName,QString newName)
 {
-    auto comp = componentInfoByName(componentName);
-    if (comp)
+    if (components.contains(componentName))
     {
-        int index = components.indexOf(comp);
-        if (index >= 0)
+        auto component = components[componentName];
+        componentName = newName;
+        components.remove(componentName);
+        components.insert(newName, component);
+
+        bool anyConnections = false;
+        for(int i = connections.count()-1; i>=0; i--)
         {
-            components.at(index)->name = newName;
-
-            bool anyConnections = false;
-            for(int i = connections.count()-1; i>=0; i--)
+            auto conn = connections.at(i);
+            if (conn->inputComponentName.compare(componentName, Qt::CaseInsensitive) == 0)
             {
-                auto conn = connections.at(i);
-                if (conn->inputComponentName.compare(componentName, Qt::CaseInsensitive) == 0)
-                {
-                    conn->inputComponentName = newName;
-                    anyConnections = true;
-                }
-
-                if (conn->outputComponentName.compare(componentName, Qt::CaseInsensitive) == 0)
-                {
-                    conn->outputComponentName = newName;
-                    anyConnections = true;
-                }
+                conn->inputComponentName = newName;
+                anyConnections = true;
             }
 
-            emit componentsUpdated();
-            if (anyConnections)
-                emit connectionsUpdated();
-            return true;
+            if (conn->outputComponentName.compare(componentName, Qt::CaseInsensitive) == 0)
+            {
+                conn->outputComponentName = newName;
+                anyConnections = true;
+            }
         }
+
+        emit componentsUpdated();
+
+        if (anyConnections) emit connectionsUpdated();
+
+        return true;
     }
     return false;
 }
@@ -239,9 +228,11 @@ bool Scheme::renameComponentByName(QString componentName,QString newName)
 
 bool Scheme::removeComponentByName(QString componentName)
 {
-    auto component = componentInfoByName(componentName);
+    auto component = components[componentName];
 
-    components.removeAt(components.indexOf(component));
+    components.remove(componentName);
+    componentCountByModule[component->parentModule]--;
+    if(componentCountByModule[component->parentModule] == 0) componentCountByModule.remove(component->parentModule);
 
     auto removeConnections = [=](QString componentName, QString channelName, QHash<QString, QList<ComponentConnection*>>& connections)
     {
@@ -261,18 +252,17 @@ bool Scheme::removeComponentByName(QString componentName)
     emit connectionsUpdated();
 
     return true;
-
 }
 
 ComponentInfo *Scheme::componentInfoByNameTypeModule(QString componentName, QString componentType, QString moduleName)
 {
-    foreach(auto comp, components)
+    for(auto component : components)
     {
-        if (comp->name.compare(componentName, Qt::CaseInsensitive) == 0 &&
-            comp->type.compare(componentType, Qt::CaseInsensitive) == 0 &&
-            comp->parentModule.compare(moduleName, Qt::CaseInsensitive) == 0)
+        if (component->name.compare(componentName, Qt::CaseInsensitive) == 0 &&
+            component->type.compare(componentType, Qt::CaseInsensitive) == 0 &&
+            component->parentModule.compare(moduleName, Qt::CaseInsensitive) == 0)
         {
-            return comp;
+            return component;
         }
     }
     return nullptr;

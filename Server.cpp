@@ -135,8 +135,8 @@ void Server::slotTakeByteData(QWebSocket *in_pConnection, const QByteArray &in_d
         return;    
 
     ModuleProxyONB* pNetConnection = m_connections[in_pConnection];
-    if (pNetConnection)
-        pNetConnection->receiveData(in_data);
+    if (pNetConnection) pNetConnection->receiveData(in_data);
+
     m_packetsReceived++;
     m_bytesReceived += static_cast<quint64>(in_data.size());
 }

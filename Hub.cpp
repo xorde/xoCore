@@ -81,8 +81,6 @@ void Hub::addModule(ModuleProxyONB *module)
 
     m_moduleConnections << connect(module, &ModuleProxyONB::ready, [=]()
     {
-        //GlobalConsole::writeLine(QString("MODULE READY ") + module->name());
-
         emit moduleReady(module);
         emit componentAdded(module);
     });
@@ -100,7 +98,7 @@ void Hub::addModule(ModuleProxyONB *module)
         QString sender = module->name();
         if (!component.isEmpty())
             sender += "." + component;
-//        qDebug() << "MESSAGE from " << sender << ":" << text;
+
         GlobalConsole::writeItem(sender, text);
     });
 
@@ -199,21 +197,8 @@ void Hub::clearConnections()
     m_schemeConnections.clear();
 }
 
-ComponentBase *pluginByName(QList<ComponentBase*> plugins, QString &name)
-{
-    foreach(ComponentBase *comp, plugins)
-    {
-        if (comp->objectName().compare(name, Qt::CaseInsensitive) == 0)
-        {
-            return comp;
-        }
-    }
-    return nullptr;
-}
-
 void Hub::checkCurrentSchemeComponents()
 {
-
     if (!m_scheme)
     {
         //Removing all components
@@ -233,7 +218,6 @@ void Hub::checkCurrentSchemeComponents()
     QList<String4> schemeComponents;
     for (auto compInfo : m_scheme->components)
     {
-
         schemeComponents << String4(compInfo->name, compInfo->type, compInfo->parentModule);
 
         componentCountByAppName[compInfo->parentModule]++;
@@ -247,12 +231,10 @@ void Hub::checkCurrentSchemeComponents()
             Core::Instance()->killApplication(moduleName);
     }
 
-    //Looking through existing created components
     for(auto module : getModules())
     {
         for (auto compName : module->componentNames())
         {
-            //Looking for a match (name, type, module) in the scheme
             auto compExisting = module->component(compName);
             if (compExisting)
             {
@@ -264,8 +246,6 @@ void Hub::checkCurrentSchemeComponents()
                     auto compSchemeHeader = schemeComponents.at(i);
                     if (compSchemeHeader.equals(compExistingHeader))
                     {
-                        //Remove from search list.
-                        //Found corresponding component
                         schemeComponents.removeAt(i);
                         exists = true;
                         break;
@@ -274,14 +254,12 @@ void Hub::checkCurrentSchemeComponents()
 
                 if (!exists)
                 {
-                    //No match found -> remove the actual component
                     module->deleteComponent(compName);
                 }
             }
         }
     }
 
-    //The leftovers in the search list should be created
     for(auto compHeader : schemeComponents)
     {
         auto module = getModuleByName(compHeader.c);
@@ -291,7 +269,6 @@ void Hub::checkCurrentSchemeComponents()
         }
     }
 
-    //Applying settings
     for(auto compInfo : m_scheme->components)
     {
         reloadComponentSettingsFromScheme(compInfo);
@@ -302,7 +279,7 @@ void Hub::reloadComponentSettingsFromScheme(QString compName)
 {
     if (!m_scheme) return;
 
-    auto compInfo = m_scheme->componentInfoByName(compName);
+    auto compInfo = m_scheme->components[compName];
 
     reloadComponentSettingsFromScheme(compInfo);
 }

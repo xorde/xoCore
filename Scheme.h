@@ -28,7 +28,7 @@ public:
     void addConnection(ComponentConnection *conn);
     void removeConnection(ComponentConnection *connection);
 
-    ComponentInfo *componentInfoByName(QString componentName);
+    bool containsModuleName(QString name);
     bool containsComponentName(QString name);
     bool removeComponentByName(QString componentName);
     bool renameComponentByName(QString componentName, QString newName);
@@ -38,7 +38,8 @@ public:
     void clear(bool sendSignals = true);
     void reload();
 
-    QList<ComponentInfo*> components;
+    QMap<QString, ComponentInfo*> components;
+    QMap<QString, int> componentCountByModule;
     QList<ComponentConnection*> connections;
 
     QHash<QString, QList<ComponentConnection*>> connectionsByOutput;

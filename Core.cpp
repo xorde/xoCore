@@ -50,7 +50,6 @@ Core::Core(QObject *parent) : QObject(parent)
             return;
         }
 
-
         m_hub->addModule(module);
 
         connect(module, &ModuleProxyONB::ready, this, [=]()
@@ -87,17 +86,12 @@ Core::Core(QObject *parent) : QObject(parent)
     }, Qt::QueuedConnection);
 
     m_scheme = new Scheme();
-    connect(m_scheme, &Scheme::loaded, this, [=]() {
-        GlobalConsole::writeLine("Scheme loaded: " + m_scheme->getLastLoadedPath());
-    }, Qt::QueuedConnection);
+    connect(m_scheme, &Scheme::loaded, this, [=]() { GlobalConsole::writeLine("Scheme loaded: " + m_scheme->getLastLoadedPath()); }, Qt::QueuedConnection);
 
     m_hub = new Hub(this);
     m_hub->setScheme(m_scheme);
 
-    connect(m_hub, &Hub::enableChanged, this, [=](bool enabled) {
-        GlobalConsole::writeLine(QString("Scheme ") + (enabled ? "started" : "stopped"));
-    }, Qt::QueuedConnection);
-
+    connect(m_hub, &Hub::enableChanged, this, [=](bool enabled) { GlobalConsole::writeLine(QString("Scheme ") + (enabled ? "started" : "stopped")); }, Qt::QueuedConnection);
 
     ModuleList::Instance()->init();
     parseApplicationsStartOptions();
@@ -118,6 +112,8 @@ Core::Core(QObject *parent) : QObject(parent)
 
 Core::~Core()
 {
+    for(auto connection : m_connections) disconnect(connection);
+
     for(auto process : m_processesByAppName)
     {
         process->kill();
@@ -144,9 +140,13 @@ void Core::startApplication(QString applicationName)
 
     process->setWorkingDirectory(QFileInfo(appPath).dir().absolutePath());
     process->start(appPath, QStringList() << "-i" << "127.0.0.1" << "-p" << QString::number(m_server->getPort()));
-    process->waitForStarted();
 
     m_processesByAppName[applicationName] = process;
+
+    m_connections << connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), process, [=](int, QProcess::ExitStatus)
+    {
+        m_hub->checkCurrentSchemeComponents();
+    });
 }
 
 void Core::killApplication(QString applicationName)
@@ -180,8 +180,8 @@ void Core::updateModuleStartType(QString moduleName, ModuleStartType type)
 
     switch(type)
     {
-    case HOT: startApplication(moduleName); break;
-    case COLD:  killApplication(moduleName);  break;
+        case HOT: startApplication(moduleName); break;
+        case COLD: killApplication(moduleName);  break;
     }
 
     QFile startOptionsFile(QApplication::applicationDirPath() + "/ModuleStartOptions");
@@ -237,10 +237,7 @@ bool Core::removeComponentFromScheme(ComponentInfo *componentInfo)
         int& counter = m_componentCountByModuleName[componentInfo->parentModule];
         counter--;
 
-        if(counter == 0)
-        {
-            killApplication(componentInfo->parentModule);
-        }
+        if(counter == 0) killApplication(componentInfo->parentModule);
     }
 
     return m_scheme->removeComponentByName(componentInfo->name);
@@ -270,10 +267,7 @@ void Core::parseApplicationsStartOptions()
 
 bool Core::loadScheme(QString schemePath)
 {
-    if (m_hub->isEnabled())
-    {
-        m_hub->setIsEnabled(false);
-    }
+    if (m_hub->isEnabled()) m_hub->setIsEnabled(false);
 
     bool loaded = m_scheme->load(schemePath);
     m_hub->setScheme(m_scheme);
@@ -305,17 +299,16 @@ void Core::loadCorePlugins()
 {
     auto corePluginPaths = FileUtilities::getFilesOfType(FolderCorePlugins, "dll", false, true);
 
-    foreach(QString path, corePluginPaths)
+    for(auto path : corePluginPaths)
     {
         QFileInfo fileInfo(path);
 
         QString corePluginName = FileUtilities::filename(path);
 
-        QPluginLoader loader(path);
-        QObject* plugin = loader.instance();
+        auto plugin = QPluginLoader(path).instance();
         if (plugin)
         {
-            xoCorePlugin* corePlugin = qobject_cast<xoCorePlugin*>(plugin);
+            auto corePlugin = qobject_cast<xoCorePlugin*>(plugin);
             if (corePlugin)
             {
                 m_corePlugins.insert(corePluginName, corePlugin);
