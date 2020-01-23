@@ -215,18 +215,35 @@ void Hub::checkCurrentSchemeComponents()
     QMap<QString, int> componentCountByAppName;
 
     //Creating the search list
-    QList<String4> schemeComponents;
+    QList<String3> schemeComponents;
     for (auto compInfo : m_scheme->components)
     {
-        schemeComponents << String4(compInfo->name, compInfo->type, compInfo->parentModule);
+        schemeComponents << String3(compInfo->name, compInfo->type, compInfo->parentModule);
 
         componentCountByAppName[compInfo->parentModule]++;
     }
 
+    auto startComponents = [this](QList<String3>& schemeComponents)
+    {
+        for(auto compHeader : schemeComponents)
+        {
+            auto module = getModuleByName(compHeader.moduleName);
+
+            if (module)
+            {
+                module->createComponent(compHeader.componentType, compHeader.componentName);
+            }
+        }
+    };
+
+
     for(auto moduleName : componentCountByAppName.keys())
     {
         if(componentCountByAppName.value(moduleName) > 0)
+        {
             Core::Instance()->startApplication(moduleName);
+            startComponents(schemeComponents);
+        }
         else
             Core::Instance()->killApplication(moduleName);
     }
@@ -238,7 +255,7 @@ void Hub::checkCurrentSchemeComponents()
             auto compExisting = module->component(compName);
             if (compExisting)
             {
-                String4 compExistingHeader(compName, compExisting->componentType(), module->name());
+                String3 compExistingHeader(compName, compExisting->componentType(), module->name());
 
                 bool exists = false;
                 for (int i = 0; i < schemeComponents.count(); i++)
@@ -252,22 +269,12 @@ void Hub::checkCurrentSchemeComponents()
                     }
                 }
 
-                if (!exists)
-                {
-                    module->deleteComponent(compName);
-                }
+                if (!exists) module->deleteComponent(compName);
             }
         }
     }
 
-    for(auto compHeader : schemeComponents)
-    {
-        auto module = getModuleByName(compHeader.c);
-        if (module)
-        {
-            module->createComponent(compHeader.b, compHeader.a);
-        }
-    }
+    startComponents(schemeComponents);
 
     for(auto compInfo : m_scheme->components)
     {
@@ -284,15 +291,15 @@ void Hub::reloadComponentSettingsFromScheme(QString compName)
     reloadComponentSettingsFromScheme(compInfo);
 }
 
-void Hub::reloadComponentSettingsFromScheme(ComponentInfo *compInfo)
+void Hub::reloadComponentSettingsFromScheme(ComponentInfo *info)
 {
-    if (!compInfo) return;
+    if (!info) return;
 
-    auto comp = getComponentByName(compInfo->name);
-    if (comp)
+    auto component = getComponentByName(info->name);
+    if (component)
     {
-        auto settingsToLoad = compInfo->settings;
-        ONBSettings onbsettings(comp);
+        auto settingsToLoad = info->settings;
+        ONBSettings onbsettings(component);
         onbsettings.metaDescriptor()->loadFromJson(settingsToLoad);
     }
 }

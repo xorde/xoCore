@@ -145,8 +145,11 @@ void Core::startApplication(QString applicationName)
 
     m_connections << connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), process, [=](int, QProcess::ExitStatus)
     {
+        m_processesByAppName.remove(applicationName);
+
         m_hub->checkCurrentSchemeComponents();
     });
+
 }
 
 void Core::killApplication(QString applicationName)

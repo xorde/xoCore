@@ -19,26 +19,24 @@
 
 using namespace std;
 
-struct String4
+struct String3
 {
-    String4(QString _a = "", QString _b = "", QString _c = "", QString _d = "")
+    String3(QString _componentName = "", QString _componentType = "", QString _moduleName = "")
     {
-        a = _a;
-        b = _b;
-        c = _c;
-        d = _d;
+        componentName = _componentName;
+        componentType = _componentType;
+        moduleName = _moduleName;
     }
-    QString a = "";
-    QString b = "";
-    QString c = "";
-    QString d = "";
 
-    bool equals(String4 &other, Qt::CaseSensitivity caseSense = Qt::CaseInsensitive)
+    QString componentName;
+    QString componentType;
+    QString moduleName;
+
+    bool equals(String3 &other, Qt::CaseSensitivity caseSense = Qt::CaseInsensitive)
     {
-        if (a.compare(other.a, caseSense) != 0) return false;
-        if (b.compare(other.b, caseSense) != 0) return false;
-        if (c.compare(other.c, caseSense) != 0) return false;
-        if (d.compare(other.d, caseSense) != 0) return false;
+        if (componentName.compare(other.componentName, caseSense) != 0) return false;
+        if (componentType.compare(other.componentType, caseSense) != 0) return false;
+        if (moduleName.compare(other.moduleName, caseSense) != 0) return false;
         return true;
     }
 };
