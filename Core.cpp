@@ -300,7 +300,11 @@ bool Core::deleteScheme(QString schemePath)
 
 void Core::loadCorePlugins()
 {
+#ifdef Q_OS_UNIX
+    auto corePluginPaths = FileUtilities::getFilesOfType(FolderCorePlugins, "so", false, true);
+#else
     auto corePluginPaths = FileUtilities::getFilesOfType(FolderCorePlugins, "dll", false, true);
+#endif
 
     for(auto path : corePluginPaths)
     {
