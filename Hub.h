@@ -1,20 +1,19 @@
 #ifndef HUB_H
 #define HUB_H
 
-#include <QObject>
 #include <queue>
+#include <QObject>
 #include <QFuture>
 #include <QFutureWatcher>
 
 #include "Scheme.h"
+#include "ComponentBase.h"
 
 #include "Module/ModuleProxyONB.h"
 #include "Module/ComponentProxyONB.h"
-
 #include "helpers/ConnectionHelper.h"
 
 #include "thread_safe/thread_safe_queue.h"
-#include "ComponentBase.h"
 #include "xoCore_global.h"
 
 using namespace std;
@@ -46,7 +45,7 @@ class XOCORESHARED_EXPORT Hub : public QObject
     Q_OBJECT
 public:
     Hub(QObject* parent = nullptr);
-    ~Hub();
+    virtual ~Hub() override;
 
     void setScheme(Scheme* m_scheme);
     Scheme* getScheme();
