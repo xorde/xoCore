@@ -296,9 +296,13 @@ void ModuleProxyONB::parseClassInfo(const ONBPacket &packet)
         if (header.objectID == svcClass)
         {
             uint32_t cid = *reinterpret_cast<const uint32_t*>(packet.data().data());
+            if (m_classes.contains(cid))
+                qDebug() << "CLASSES already contains this shit!!";
             m_classes << cid;
             ComponentProxyONB *c = new ComponentProxyONB(header.componentID, this);
             connect(c, SIGNAL(newData(ONBPacket)), SLOT(sendClassInfoPacket(ONBPacket)));
+            if (m_classInfo.contains(cid))
+                qDebug() << "CLASSINFO already contains this shit!!";
             m_classInfo[cid] = c;
             // request class info
             ONBHeader hdr;
