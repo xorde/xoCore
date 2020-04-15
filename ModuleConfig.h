@@ -2,8 +2,10 @@
 #define MODULECONFIG_H
 
 #include <QList>
+#include <QHash>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QMetaType>
 #include "xoCore_global.h"
 
 struct IOChannel
