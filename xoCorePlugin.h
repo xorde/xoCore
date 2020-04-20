@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include "xoCore_global.h"
+#include <QMap>
 
 class XOCORESHARED_EXPORT xoCorePlugin : public QObject
 {
@@ -14,6 +15,8 @@ public:
     }
     virtual void start() = 0;
     virtual bool providesUI() = 0;
+
+    QMap<QString, QVariant> getSettings();
 };
 
 

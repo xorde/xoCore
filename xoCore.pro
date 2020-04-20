@@ -32,7 +32,8 @@ SOURCES += \
     PluginManager.cpp \
     Module/ComponentProxyONB.cpp \
     Module/ModuleProxyONB.cpp \
-    ONBMetaDescription.cpp
+    ONBMetaDescription.cpp \
+    xoCorePlugin.cpp
 
 HEADERS += \
     xoCore_global.h \
