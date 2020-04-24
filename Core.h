@@ -4,17 +4,19 @@
 #include <QObject>
 #include <QJsonObject>
 #include <QProcess>
+
 #include "ConfigManager.h"
 #include "Server.h"
 #include "Scheme.h"
-#include "Module/ModuleProxyONB.h"
-#include "Module/ComponentProxyONB.h"
-#include "Hub.h"
-#include "PluginManager.h"
 #include "ModuleList.h"
 #include "ModuleStartType.h"
+#include "Hub.h"
+#include "Loader.h"
+#include "PluginManager.h"
 #include "xoCore_global.h"
 #include "xoCorePlugin.h"
+#include "Module/ModuleProxyONB.h"
+#include "Module/ComponentProxyONB.h"
 
 class XOCORESHARED_EXPORT Core : public QObject
 {
@@ -65,6 +67,7 @@ private:
     Server *m_server = nullptr;
     Scheme *m_scheme = nullptr;
     Hub *m_hub = nullptr;
+    Loader* loader = nullptr;
 
     QMap<QString, QProcess*> m_processesByAppName;
     QSet<QString> m_appNames;
@@ -77,8 +80,6 @@ private:
     QString getApplicationPath(QString applicationName);
 
     static Core* _instance;
-
-    QList<QMetaObject::Connection> m_connections;
 
     QMap<QString, QMetaObject::Connection> m_moduleConnectsModuleName;
 

@@ -39,7 +39,7 @@ Core::Core(QObject *parent) : QObject(parent)
     FileUtilities::createIfNotExists(FolderPlugins);
     FileUtilities::createIfNotExists(FolderModules);
 
-    m_server = new Server();
+    m_server = new Server(this);
     m_server->startListening();
 
     connect(m_server, &Server::moduleConnection, this, [=](ModuleProxyONB *module)
@@ -52,10 +52,7 @@ Core::Core(QObject *parent) : QObject(parent)
 
         m_hub->addModule(module);
 
-        connect(module, &ModuleProxyONB::ready, this, [=]()
-        {
-            Core::Instance()->getHub()->checkCurrentSchemeComponents();
-        }, Qt::QueuedConnection);
+        connect(module, &ModuleProxyONB::ready, this, [=]() { Core::Instance()->getHub()->checkCurrentSchemeComponents(); }, Qt::QueuedConnection);
 
         QString configsPath = FolderConfigs + module->name();
         QDir dir(configsPath);
@@ -85,7 +82,7 @@ Core::Core(QObject *parent) : QObject(parent)
 
     }, Qt::QueuedConnection);
 
-    m_scheme = new Scheme();
+    m_scheme = new Scheme(this);
     connect(m_scheme, &Scheme::loaded, this, [=]() { GlobalConsole::writeLine("Scheme loaded: " + m_scheme->getLastLoadedPath()); }, Qt::QueuedConnection);
 
     m_hub = new Hub(this);
@@ -112,18 +109,12 @@ Core::Core(QObject *parent) : QObject(parent)
 
 Core::~Core()
 {
-    for(auto connection : m_connections) disconnect(connection);
-
     for(auto process : m_processesByAppName)
     {
         process->kill();
         process->waitForFinished();
     }
     m_processesByAppName.clear();
-
-    if (m_server) delete m_server;
-    if (m_hub) delete m_hub;
-    if (m_scheme) delete m_scheme;
 
     ModuleList::removeList();
 }
@@ -143,7 +134,7 @@ void Core::startApplication(QString applicationName)
 
     m_processesByAppName[applicationName] = process;
 
-    m_connections << connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), process, [=](int, QProcess::ExitStatus)
+    connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), process, [=](int, QProcess::ExitStatus)
     {
         m_processesByAppName.remove(applicationName);
 

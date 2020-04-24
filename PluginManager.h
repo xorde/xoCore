@@ -19,8 +19,9 @@ public:
     QHash<QString, ModuleBaseAppONB*> factories;
     QJsonObject parseComponents();
     void createConfigList(const QJsonObject& in_obj);
+
 private:
-    static PluginManager* st_instance;    
+    static PluginManager* instance;
 };
 
 #endif // PLUGINMANAGER_H

@@ -10,7 +10,7 @@ class XOCORESHARED_EXPORT Scheme : public QObject
 {
     Q_OBJECT
 public:
-    Scheme();    
+    Scheme(QObject* parent = nullptr);
     Scheme(const QJsonObject& in_obj);
 
     ~Scheme();

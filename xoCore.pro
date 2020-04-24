@@ -19,6 +19,7 @@ SOURCES += \
     ComponentsConfigParser.cpp \
     Data/ComponentConnection.cpp \
     Data/ComponentInfo.cpp \
+    Loader.cpp \
     Module/ObjectProxy.cpp \
     ONBMetaDescriptor.cpp \
     ONBSettings.cpp \
@@ -36,6 +37,7 @@ SOURCES += \
     xoCorePlugin.cpp
 
 HEADERS += \
+    Loader.h \
     xoCore_global.h \
     xoCorePlugin.h \
     ComponentsConfigParser.h \

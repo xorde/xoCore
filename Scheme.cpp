@@ -11,7 +11,7 @@
 
 #include "GlobalConsole.h"
 
-Scheme::Scheme()
+Scheme::Scheme(QObject* parent) : QObject(parent)
 {
 
 }

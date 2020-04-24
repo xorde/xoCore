@@ -4,7 +4,7 @@
 #include <QJsonDocument>
 #include <QPluginLoader>
 
-PluginManager *PluginManager::st_instance = nullptr;
+PluginManager *PluginManager::instance = nullptr;
 
 PluginManager::PluginManager(QObject *parent) : QObject(parent)
 {
@@ -20,10 +20,10 @@ PluginManager::~PluginManager()
 
 void PluginManager::removeManager()
 {
-    if (st_instance)
+    if (instance)
     {
-        delete st_instance;
-        st_instance = nullptr;
+        delete instance;
+        instance = nullptr;
     }
 }
 
@@ -32,40 +32,40 @@ QJsonObject PluginManager::parseComponents()
     QJsonObject json;
     for (auto module : factories)
     {
-        if (module)
+        if (!module) continue;
+
+        QJsonObject moduleObject = module->getJsonConfig();
+
+        for(auto componentRef : moduleObject["components"].toArray())
         {
-            QJsonObject moduleObject = module->getJsonConfig();
+            auto component = componentRef.toObject();
 
-            for(auto componentRef : moduleObject["components"].toArray())
-            {
-                auto component = componentRef.toObject();
-
-                json[component["className"].toString()] = component;
-            }
+            json[component["className"].toString()] = component;
         }
     }
+
     return json;
 }
 
 PluginManager* PluginManager::Instance()
 {
-    if (!st_instance)
-        st_instance = new PluginManager();
+    if (!instance) instance = new PluginManager();
 
-    return st_instance;
+    return instance;
 }
 
 ModuleBaseONB* PluginManager::load(QString moduleName, QString path)
 {
     QPluginLoader loader(path);
-    QObject* plugin = loader.instance();
+    auto plugin = loader.instance();
     if(!plugin) return nullptr;
 
-    ModuleBaseAppONB* pluginModule = qobject_cast<ModuleBaseAppONB*>(plugin);
+    auto pluginModule = qobject_cast<ModuleBaseAppONB*>(plugin);
     if (pluginModule)
     {
         pluginModule->tryConnect();
         factories[moduleName] = pluginModule;
     }
+
     return pluginModule;
 }

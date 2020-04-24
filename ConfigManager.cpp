@@ -1,13 +1,12 @@
+#include "Core.h"
 #include "ConfigManager.h"
+#include "fileutilities.h"
 
 #include <QDir>
 #include <QFile>
 #include <QByteArray>
 #include <QJsonArray>
 #include <QJsonDocument>
-
-#include "Core.h"
-#include "fileutilities.h"
 
 void ConfigManager::writeModuleConfig(ModuleProxyONB *module)
 {
@@ -18,28 +17,22 @@ void ConfigManager::writeModuleConfig(ModuleProxyONB *module)
 
     auto image = module->icon();
 
-
     if(!image.isNull())
     {
         image.convertToFormat(QImage::Format_RGBA8888);
 
         if (image.size() != QSize(24, 24))
-        {
             image = image.scaled(24, 24, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-        }
+
         image.save(path + module->name() + ".png");
     }
 
     for(auto& name : module->classNames())
-    {
         writeComponentConfig(module, module->classInfo(name));
-    }
 }
 
 void ConfigManager::writeComponentConfig(ModuleProxyONB* module, ComponentProxyONB *component)
 {
-    QElapsedTimer t; t.restart();
-
     QString path = Core::FolderConfigs + module->name() + "/";
     verifyDir(module->name());
 
@@ -58,26 +51,15 @@ void ConfigManager::writeComponentConfig(ModuleProxyONB* module, ComponentProxyO
         if(!component->icon().isNull())
           image = component->icon();
 
-
-
         if(!image.isNull())
         {
             image.convertToFormat(QImage::Format_RGBA8888);
             if (image.size() != QSize(24, 24))
-            {
                 image = image.scaled(24, 24, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-            }
+
             image.save(path + module->name() + "_" + component->componentType() + ".png");
         }
-
-        qDebug() << "Config for component written" << component->componentType() << t.elapsed();
     }
-    else
-    {
-        qDebug() << "Config exists" << component->componentType() << t.elapsed();
-    }
-
-
 }
 
 ConfigManager::ConfigManager()
@@ -97,9 +79,7 @@ QJsonObject ConfigManager::readConfigurations()
     QJsonObject result;
 
     for(auto& moduleName : QDir(configsPath).entryList(QDir::Dirs | QDir::NoDotAndDotDot))
-    {
         result[moduleName] = ConfigManager::readConfiguration(configsPath + moduleName);
-    }
 
     return result;
 }
@@ -122,7 +102,6 @@ QJsonObject ConfigManager::toJson(const QByteArray& in_content)
     return obj;
 }
 
-
 QJsonObject ConfigManager::readConfiguration(QString in_path)
 {
     QJsonObject object;
@@ -140,11 +119,10 @@ QJsonObject ConfigManager::readConfiguration(QString in_path)
     return object;
 }
 
-
 void ConfigManager::writeToFile(const QJsonObject& in_obj, QString in_path)
 {
     QStringList keys = in_obj.keys();
-    for (QString key : keys)
+    for (auto key : keys)
     {
         QJsonObject obj = in_obj[key].toObject();
 
