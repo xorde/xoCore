@@ -3,19 +3,17 @@
 
 #include <QObject>
 #include <QJsonObject>
-#include <QProcess>
 
-#include "ConfigManager.h"
+#include "xoCore_global.h"
+
+#include "Hub.h"
+#include "Loader.h"
 #include "Server.h"
 #include "Scheme.h"
 #include "ModuleList.h"
-#include "ModuleStartType.h"
-#include "Hub.h"
-#include "Loader.h"
-#include "PluginManager.h"
-#include "xoCore_global.h"
 #include "xoCorePlugin.h"
-#include "Module/ModuleProxyONB.h"
+#include "PluginManager.h"
+#include "ConfigManager.h"
 #include "Module/ComponentProxyONB.h"
 
 class XOCORESHARED_EXPORT Core : public QObject
@@ -41,13 +39,7 @@ public:
     Server *getServer();
     Scheme *getScheme();
     Hub *getHub();
-
-    void startApplication(QString applicationName);
-    void killApplication(QString applicationName);
-    bool applicationIsRunning(QString applicationName);
-    bool getApplicationStartType(QString applicationName);    
-    void updateModuleStartType(QString moduleName, ModuleStartType type);
-    void refreshConfigsForModule(QString moduleName);
+    Loader* getLoader();
 
     bool loadScheme(QString schemePath);
     bool deleteScheme(QString schemePath);
@@ -58,8 +50,6 @@ public:
     ComponentInfo *createComponentInScheme(QString componentType, QString moduleName);
     bool removeComponentFromScheme(ComponentInfo* componentInfo);
 
-signals:
-    void configWritten(ModuleProxyONB* module);
 
 private:
     QMap<QString, xoCorePlugin*> m_corePlugins;
@@ -69,22 +59,9 @@ private:
     Hub *m_hub = nullptr;
     Loader* loader = nullptr;
 
-    QMap<QString, QProcess*> m_processesByAppName;
-    QSet<QString> m_appNames;
-
-    QSet<QString> m_names;
-
-    QMap<QString, ModuleStartType> m_startTypeByAppName;
-
-    void parseApplicationsStartOptions();
-    QString getApplicationPath(QString applicationName);
+    QMap<QString, int> m_componentCountByModuleName;
 
     static Core* _instance;
-
-    QMap<QString, QMetaObject::Connection> m_moduleConnectsModuleName;
-
-    QMap<QString, int> m_componentCountByModuleName;
-    QMap<QString, ModuleProxyONB*> m_moduleByName;
 };
 
 #endif // CORE_H

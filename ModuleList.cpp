@@ -150,46 +150,22 @@ void ModuleList::refreshConfigList()
     }
 }
 
-void ModuleList::parse(QString moduleDirectoryPath, ModuleConfig::Type moduleType)
+void ModuleList::parse(QString moduleDirectoryPath, ModuleConfig::Type type)
 {
     QString moduleName = QDir(moduleDirectoryPath).dirName();
-    switch(moduleType)
+
+    QString moduleConfigPath = Core::FolderConfigs + moduleName + "/";
+    for(auto entry : QDir(moduleConfigPath).entryList(QDir::Files))
     {
-        case ModuleConfig::Type::MODULE:
-        {
+        QFile file(moduleConfigPath + entry);
+        if(!file.open(QIODevice::ReadOnly)) continue;
 
-            QString moduleConfigPath = Core::FolderConfigs + moduleName + "/";
-            for(auto entry : QDir(moduleConfigPath).entryList(QDir::Files))
-            {
-                QFile file(moduleConfigPath + entry);
-                if(!file.open(QIODevice::ReadOnly)) continue;
+        auto config = new ModuleConfig();
+        config->type = type;
+        configs[QFileInfo(entry).baseName()] = config;
 
-                auto config = new ModuleConfig();
-                configs[QFileInfo(entry).baseName()] = config;
-
-                QJsonDocument document = QJsonDocument::fromJson(file.readAll());
-                parseJSON(document.object(), config);
-            }
-            break;
-        }
-
-        case ModuleConfig::Type::PLUGIN:
-        {
-            ModuleBaseONB* pFactory = loadFactory(moduleName);
-            if (!pFactory)
-                break;
-
-            for(auto& json : pFactory->getClassesInfo())
-            {
-                auto config = new ModuleConfig();
-                config->name = json.value("className").toString();
-                config->type = moduleType;
-                config->parent = moduleName;
-                parseJSON(json, config);
-                configs[config->name] = config;
-            }
-            break;
-        }
+        QJsonDocument document = QJsonDocument::fromJson(file.readAll());
+        parseJSON(document.object(), config);
     }
 };
 

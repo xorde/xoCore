@@ -35,7 +35,7 @@ private:
     ModuleBaseONB* loadFactory(QString in_plugin_name);
 
     void parseJSON(QJsonObject root, ModuleConfig* config);
-    void parse(QString moduleDirectoryPath, ModuleConfig::Type moduleType);
+    void parse(QString moduleDirectoryPath, ModuleConfig::Type type);
 
     void clearConfigList();    
 };

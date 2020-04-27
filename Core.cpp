@@ -1,10 +1,8 @@
 #include "Core.h"
-#include "ModuleList.h"
 #include "ModuleBaseLibONB.h"
 #include "GlobalConsole.h"
-#include <QProcess>
-#include <QPair>
 #include "fileutilities.h"
+
 #include <QApplication>
 #include <QPluginLoader>
 
@@ -42,46 +40,6 @@ Core::Core(QObject *parent) : QObject(parent)
     m_server = new Server(this);
     m_server->startListening();
 
-    connect(m_server, &Server::moduleConnection, this, [=](ModuleProxyONB *module)
-    {
-        if (!module)
-        {
-            qDebug() << "Server returned null module";
-            return;
-        }
-
-        m_hub->addModule(module);
-
-        connect(module, &ModuleProxyONB::ready, this, [=]() { Core::Instance()->getHub()->checkCurrentSchemeComponents(); }, Qt::QueuedConnection);
-
-        QString configsPath = FolderConfigs + module->name();
-        QDir dir(configsPath);
-
-        if(dir.exists())
-        {
-            m_moduleByName[module->name()] = module;
-            emit configWritten(module);
-            return;
-        }
-
-        m_moduleConnectsModuleName[module->name()] = connect(module, &ModuleProxyONB::ready, this, [=]()
-        {
-            m_moduleByName[module->name()] = module;
-
-            ConfigManager::writeModuleConfig(module);
-            emit configWritten(module);
-
-            disconnect(m_moduleConnectsModuleName[module->name()]);
-
-            if(m_startTypeByAppName.contains(module->name()))
-                if(m_startTypeByAppName[module->name()] == COLD)
-                    killApplication(module->name());
-
-            m_moduleConnectsModuleName.remove(module->name());
-        }, Qt::QueuedConnection);
-
-    }, Qt::QueuedConnection);
-
     m_scheme = new Scheme(this);
     connect(m_scheme, &Scheme::loaded, this, [=]() { GlobalConsole::writeLine("Scheme loaded: " + m_scheme->getLastLoadedPath()); }, Qt::QueuedConnection);
 
@@ -90,104 +48,12 @@ Core::Core(QObject *parent) : QObject(parent)
 
     connect(m_hub, &Hub::enableChanged, this, [=](bool enabled) { GlobalConsole::writeLine(QString("Scheme ") + (enabled ? "started" : "stopped")); }, Qt::QueuedConnection);
 
-    ModuleList::Instance()->init();
-    parseApplicationsStartOptions();
-
-    QDir applicationsDirectory(FolderModules);
-    for(auto applicationName : applicationsDirectory.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
-    {
-        m_appNames.insert(applicationName);
-
-        QString path = getApplicationPath(applicationName);
-
-        QFileInfo info(path);
-        if(!info.exists()) { qDebug() << "Module doesn't exist" << applicationName; continue; }
-
-        if(m_startTypeByAppName[applicationName] == HOT) startApplication(applicationName);
-    }
+    loader = new Loader(m_server, m_hub, this);
 }
 
 Core::~Core()
 {
-    for(auto process : m_processesByAppName)
-    {
-        process->kill();
-        process->waitForFinished();
-    }
-    m_processesByAppName.clear();
-
     ModuleList::removeList();
-}
-
-void Core::startApplication(QString applicationName)
-{
-    if(!m_appNames.contains(applicationName)) return;
-
-    if(m_processesByAppName.contains(applicationName)) return;
-
-    auto process = new QProcess(this);
-
-    auto appPath = getApplicationPath(applicationName);
-
-    process->setWorkingDirectory(QFileInfo(appPath).dir().absolutePath());
-    process->start(appPath, QStringList() << "-i" << "127.0.0.1" << "-p" << QString::number(m_server->getPort()));
-
-    m_processesByAppName[applicationName] = process;
-
-    connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), process, [=](int, QProcess::ExitStatus)
-    {
-        m_processesByAppName.remove(applicationName);
-
-        m_hub->checkCurrentSchemeComponents();
-    });
-
-}
-
-void Core::killApplication(QString applicationName)
-{
-    if(!m_appNames.contains(applicationName)) return;
-
-    if(m_startTypeByAppName[applicationName] == HOT) return;
-
-    auto process = m_processesByAppName[applicationName];
-    process->kill();
-    process->waitForFinished();
-
-    m_processesByAppName.remove(applicationName);
-
-    m_moduleByName.remove(applicationName);
-}
-
-bool Core::applicationIsRunning(QString applicationName)
-{
-    return m_processesByAppName.contains(applicationName);
-}
-
-bool Core::getApplicationStartType(QString applicationName)
-{
-    return m_startTypeByAppName.contains(applicationName) ? m_startTypeByAppName[applicationName] : true;
-}
-
-void Core::updateModuleStartType(QString moduleName, ModuleStartType type)
-{
-    m_startTypeByAppName[moduleName] = type;
-
-    switch(type)
-    {
-        case HOT: startApplication(moduleName); break;
-        case COLD: killApplication(moduleName);  break;
-    }
-
-    QFile startOptionsFile(QApplication::applicationDirPath() + "/ModuleStartOptions");
-
-    if(!startOptionsFile.open(QIODevice::WriteOnly)) return;
-
-    QTextStream stream(&startOptionsFile);
-
-    for(auto appName : m_startTypeByAppName.keys())
-    {
-        stream << appName << " " << ((m_startTypeByAppName.value(appName) == ModuleStartType::HOT) ? 1 : 0) << endl;
-    }
 }
 
 ComponentInfo* Core::createComponentInScheme(QString componentType, QString moduleName)
@@ -215,10 +81,10 @@ ComponentInfo* Core::createComponentInScheme(QString componentType, QString modu
 
     m_scheme->addComponent(componentInfo);
 
-    if(getApplicationStartType(moduleName) == COLD)
+    if(loader->getApplicationStartType(moduleName) == COLD)
     {
         m_componentCountByModuleName[moduleName]++;
-        startApplication(moduleName);
+        loader->startApplication(moduleName);
     }
 
     return componentInfo;
@@ -226,37 +92,15 @@ ComponentInfo* Core::createComponentInScheme(QString componentType, QString modu
 
 bool Core::removeComponentFromScheme(ComponentInfo *componentInfo)
 {
-    if(getApplicationStartType(componentInfo->parentModule) == COLD)
+    if(loader->getApplicationStartType(componentInfo->parentModule) == COLD)
     {
         int& counter = m_componentCountByModuleName[componentInfo->parentModule];
         counter--;
 
-        if(counter == 0) killApplication(componentInfo->parentModule);
+        if(counter == 0) loader->killApplication(componentInfo->parentModule);
     }
 
     return m_scheme->removeComponentByName(componentInfo->name);
-}
-
-void Core::parseApplicationsStartOptions()
-{
-    QFile startOptionsFile(QApplication::applicationDirPath() + "/ModuleStartOptions");
-    if(startOptionsFile.open(QIODevice::ReadOnly))
-    {
-        QString contents = startOptionsFile.readAll();
-
-        QRegExp regExp("([^\\s]+)\\s(\\d+)(\\n)?");
-        regExp.setMinimal(true);
-        int position = 0;
-
-        while ((position = regExp.indexIn(contents, position)) != -1)
-        {
-            QString name = regExp.cap(1);
-            int value = regExp.cap(2).toInt();
-
-            m_startTypeByAppName[name] = value > 0 ? ModuleStartType::HOT : ModuleStartType::COLD;
-            position += regExp.matchedLength();
-        }
-    }
 }
 
 bool Core::loadScheme(QString schemePath)
@@ -327,29 +171,6 @@ Core *Core::Instance()
     return _instance;
 }
 
-void Core::refreshConfigsForModule(QString moduleName)
-{
-    QString configsPath = FolderConfigs + moduleName;
-    QDir configsDir(configsPath);
-    configsDir.removeRecursively();
-
-    if(m_appNames.contains(moduleName)) //является приложением
-    {
-        if(m_processesByAppName.contains(moduleName)) //приложение запущено
-        {
-            ConfigManager::writeModuleConfig(m_moduleByName[moduleName]);
-        }
-        else //приложение не запущено
-        {
-            startApplication(moduleName); //дальше само разберется
-        }
-    }
-    else //является плагином
-    {
-        ConfigManager::writeModuleConfig(m_moduleByName[moduleName]);
-    }
-}
-
 Server *Core::getServer()
 {
     return m_server;
@@ -360,26 +181,12 @@ Hub *Core::getHub()
     return m_hub;
 }
 
+Loader *Core::getLoader()
+{
+    return loader;
+}
+
 Scheme *Core::getScheme()
 {
     return m_scheme;
-}
-
-QString Core::getApplicationPath(QString applicationName)
-{
-#ifdef Q_OS_LINUX
-
-#ifdef QT_DEBUG
-    return FolderModules + "/" + applicationName + "/" + applicationName + "d";
-#else
-    return FolderModules + "/" + applicationName + "/" + applicationName;
-#endif
-
-#else
-#ifdef QT_DEBUG
-    return FolderModules + "/" + applicationName + "/" + applicationName + "d.exe";
-#else
-    return FolderModules + "/" + applicationName + "/" + applicationName + ".exe";
-#endif
-#endif
 }

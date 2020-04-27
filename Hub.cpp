@@ -237,15 +237,16 @@ void Hub::checkCurrentSchemeComponents()
     };
 
 
+    auto loader = Core::Instance()->getLoader();
     for(auto moduleName : componentCountByAppName.keys())
     {
         if(componentCountByAppName.value(moduleName) > 0)
         {
-            Core::Instance()->startApplication(moduleName);
+            loader->startApplication(moduleName);
             startComponents(schemeComponents);
         }
         else
-            Core::Instance()->killApplication(moduleName);
+            loader->killApplication(moduleName);
     }
 
     for(auto module : getModules())
