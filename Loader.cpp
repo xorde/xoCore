@@ -1,6 +1,7 @@
 #include "Core.h"
 #include "Loader.h"
 #include "ModuleList.h"
+#include "ModuleConfig.h"
 
 #include <QDir>
 #include <QApplication>
@@ -55,7 +56,7 @@ Loader::Loader(Server *server, Hub *hub, QObject *parent) : QObject(parent), ser
     {
         pluginList << pluginName;
 
-        PluginManager::Instance()->load(pluginName, pluginsDirectory.absolutePath() + "/" + pluginName + ".dll");
+        PluginManager::Instance()->load(pluginName, getModulePath(pluginName, ModuleConfig::Type::PLUGIN));
     }
 
     QDir applicationsDirectory(Core::FolderModules);
@@ -65,7 +66,7 @@ Loader::Loader(Server *server, Hub *hub, QObject *parent) : QObject(parent), ser
 
         appNames.insert(applicationName);
 
-        QString path = getApplicationPath(applicationName);
+        QString path = getModulePath(applicationName, ModuleConfig::Type::MODULE);
 
         QFileInfo info(path);
         if(!info.exists()) { qDebug() << "Module doesn't exist" << applicationName; continue; }
@@ -92,7 +93,7 @@ void Loader::startApplication(QString applicationName)
 
     auto process = new QProcess(this);
 
-    auto appPath = getApplicationPath(applicationName);
+    auto appPath = getModulePath(applicationName, ModuleConfig::Type::MODULE);
 
     process->setWorkingDirectory(QFileInfo(appPath).dir().absolutePath());
     process->start(appPath, QStringList() << "-i" << "127.0.0.1" << "-p" << QString::number(server->getPort()));
@@ -199,21 +200,19 @@ void Loader::refreshConfigsForModule(QString moduleName)
     }
 }
 
-QString Loader::getApplicationPath(QString applicationName)
+QString Loader::getModulePath(QString applicationName, ModuleConfig::Type type)
 {
-#ifdef Q_OS_LINUX
-
+    QString suffix;
 #ifdef QT_DEBUG
-    return Core::FolderModules + "/" + applicationName + "/" + applicationName + "d";
-#else
-    return Core::FolderModules + "/" + applicationName + "/" + applicationName;
+    suffix = "d";
 #endif
 
-#else
-#ifdef QT_DEBUG
-    return Core::FolderModules + "/" + applicationName + "/" + applicationName + "d.exe";
-#else
-    return Core::FolderModules + "/" + applicationName + "/" + applicationName + ".exe";
-#endif
-#endif
+    QString extension;
+    switch (type)
+    {
+        case ModuleConfig::Type::MODULE: extension = Core::ApplicationExtensionDot; break;
+        case ModuleConfig::Type::PLUGIN: extension = Core::PluginExtensionDot; break;
+    }
+
+    return Core::FolderModules + "/" + applicationName + "/" + applicationName + suffix + extension;
 }

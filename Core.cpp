@@ -14,10 +14,44 @@ QString Core::FolderPlugins = "xoPlugins/";
 QString Core::FolderModules = "xoModules/";
 QString Core::FolderCorePlugins = "xoCorePlugins/";
 
-QString Core::FileExtensionScheme = "scheme";
-QString Core::FileExtensionSchemeDot = "."+FileExtensionScheme;
-QString Core::FileExtensionConfig = "config";
-QString Core::FileExtensionConfigDot = "."+FileExtensionConfig;
+#ifdef Q_OS_WIN
+
+const QString Core::ApplicationExtension = "exe";
+const QString Core::ApplicationExtensionDot = "." + Core::ApplicationExtension;
+
+#elif Q_OS_LINUX
+
+const QString Core::ApplicationExtension = "";
+const QString Core::ApplicationExtensionDot = "";
+
+#elif Q_OS_MAC
+
+const QString Core::ApplicationExtension = "app";
+const QString Core::ApplicationExtensionDot = "." + Core::ApplicationExtension;
+
+#endif
+
+#ifdef Q_OS_WIN
+
+const QString Core::PluginExtension = "dll";
+const QString Core::PluginExtensionDot = "." + Core::PluginExtension;
+
+#elif Q_OS_LINUX
+
+const QString Core::luginExtension = "so";
+const QString Core::luginExtensionDot = "." + Core::PluginExtension;
+
+#elif Q_OS_MAC
+
+const QString Core::PluginExtension = "dylib";
+const QString Core::PluginExtensionDot = "." + Core::PluginExtension;
+
+#endif
+
+const QString Core::FileExtensionScheme = "scheme";
+const QString Core::FileExtensionSchemeDot = "." + Core::FileExtensionScheme;
+const QString Core::FileExtensionConfig = "config";
+const QString Core::FileExtensionConfigDot = "." + Core::FileExtensionConfig;
 
 Core::Core(QObject *parent) : QObject(parent)
 {

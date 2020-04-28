@@ -31,10 +31,16 @@ public:
     static QString FolderPlugins;
     static QString FolderCorePlugins;
 
-    static QString FileExtensionScheme;
-    static QString FileExtensionConfig;
-    static QString FileExtensionSchemeDot;
-    static QString FileExtensionConfigDot;
+    static const QString FileExtensionScheme;
+    static const QString FileExtensionConfig;
+    static const QString FileExtensionSchemeDot;
+    static const QString FileExtensionConfigDot;
+
+    static const QString ApplicationExtension;
+    static const QString ApplicationExtensionDot;
+
+    static const QString PluginExtension;
+    static const QString PluginExtensionDot;
 
     Server *getServer();
     Scheme *getScheme();
