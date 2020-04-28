@@ -92,11 +92,14 @@ public:
     {
         if (!v.canConvert(this->m_description.type))
             return false;
+
         T newValue = v.value<T>();
         m_changed = (*this->m_ptr != newValue);
         *this->m_ptr = newValue;
+
         if (m_changed)
             send();
+
         return true;
     }
 
@@ -123,7 +126,6 @@ protected:
             //! @warning This is dangerous!! or not
             this->m_ptr = reinterpret_cast<const ObjectProxyImpl<T>*>(publisher)->m_ptr;
             ObjectBase::m_description.size = publisher->description().size;
-//            this->m_ptr = dynamic_cast<const ObjectProxyImpl<T>*>(publisher)->m_ptr; // won't work
             return true;
         }
         return false;

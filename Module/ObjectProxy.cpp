@@ -87,13 +87,13 @@ bool ObjectProxy::link(ObjectProxy *publisher, ObjectProxy *subscriber)
     }
     return true;
 
-//    return false;
 }
 
 bool ObjectProxy::unlink(ObjectProxy *publisher, ObjectProxy *subscriber)
 {
     subscriber->unlink();
     subscriber->mLinkedPublisher = nullptr;
+
     disconnect(publisher, &ObjectProxy::received, subscriber, &ObjectProxy::send);
     disconnect(publisher, &ObjectProxy::valueChanged, subscriber, &ObjectProxy::send);
     return true;

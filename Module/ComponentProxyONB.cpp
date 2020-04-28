@@ -546,7 +546,6 @@ ObjectProxy *ComponentProxyONB::createObject(const ObjectDescription &desc)
         case ObjectBase::String: return new ObjectProxyImpl<QString>(this, desc);
         case ObjectBase::Common: return new ObjectProxyImpl<QByteArray>(this, desc);
         case ObjectBase::Variant: return new ObjectProxyImpl<QVariant>(this, desc);
-
         case ObjectBase::Image: return new ObjectProxyImpl<QImage>(this, desc);
 
         default: return nullptr;
