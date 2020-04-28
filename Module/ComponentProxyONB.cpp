@@ -3,25 +3,30 @@
 #include <QJsonArray>
 
 ComponentProxyONB::ComponentProxyONB(unsigned short componentID, QObject *parent) : QObject(parent),
-    m_id(componentID),
     m_componentInfoValid(false),
     m_objectsInfoValid(false),
     m_ready(false),
-    m_objectCount(0)
+    m_id(componentID),
+    m_classID(0),
+    m_serialNumber(0),
+    m_version(0),
+    m_burnCount(0),
+    m_objectCount(0),
+    m_busType(0)
 {
     // order of service objects is predefined by ONB (to be compatible with devices)
-    bindSvcObject(ObjectInfo::create("classID", m_classID));
-    bindSvcObject(ObjectInfo::create("name", m_componentName));
-    bindSvcObject(ObjectInfo::create("fullName", m_componentInfo));
-    bindSvcObject(ObjectInfo::create("serial", m_serialNumber));
-    bindSvcObject(ObjectInfo::create("version", m_version));
-    bindSvcObject(ObjectInfo::create("buildDate", m_releaseInfo));
-    bindSvcObject(ObjectInfo::create("cpuInfo", m_hardwareInfo));
-    bindSvcObject(ObjectInfo::create("burnCount", m_burnCount));
-    bindSvcObject(ObjectInfo::create("objCount", m_objectCount));
-    bindSvcObject(ObjectInfo::create("busType", m_busType));
-    bindSvcObject(ObjectInfo::create("className", m_className));
-    bindSvcObject(ObjectInfo::create("icon", m_iconData));
+    bindSvcObject(m_classID);
+    bindSvcObject(m_componentName);
+    bindSvcObject(m_componentInfo);
+    bindSvcObject(m_serialNumber);
+    bindSvcObject(m_version);
+    bindSvcObject(m_releaseInfo);
+    bindSvcObject(m_hardwareInfo);
+    bindSvcObject(m_burnCount);
+    bindSvcObject(m_objectCount);
+    bindSvcObject(m_busType);
+    bindSvcObject(m_className);
+    bindSvcObject(m_iconData);
 }
 
 ComponentProxyONB::~ComponentProxyONB()
@@ -34,27 +39,28 @@ QJsonObject ComponentProxyONB::getInfoJson() const
 {
     QJsonObject obj;
     obj["classID"] = QString::number(m_classID);
-    obj["type"] = m_className;
-    obj["name"] = m_componentName;
-    obj["info"] = m_componentInfo;
+    obj["type"] = m_className.value();
+    obj["name"] = m_componentName.value();
+    obj["info"] = m_componentInfo.value();
     obj["serial"] = QString::number(m_serialNumber);
     obj["version"] = QString::number(m_version);
-    obj["releaseinfo"] = m_releaseInfo;
-    obj["hardware"] = m_hardwareInfo;
+    obj["releaseinfo"] = m_releaseInfo.value();
+    obj["hardware"] = m_hardwareInfo.value();
 
     QJsonArray inputs, outputs;
-    for (ObjectInfo* pInfo : m_objects)
+    for (const ObjectProxy* pInfo : m_objects)
     {
         if (!pInfo)
             continue;
         switch(pInfo->flags())
         {
-        case ObjectInfo::Input:
+        case ObjectBase::Input:
             inputs.push_back(pInfo->createJsonInfo());
             break;
-        case ObjectInfo::Output:
+        case ObjectBase::Output:
             outputs.push_back(pInfo->createJsonInfo());
             break;
+        default:; // eliminate warning
         }
     }
 
@@ -68,7 +74,7 @@ QJsonObject ComponentProxyONB::settingsJson() const
 {
     QJsonObject obj;
     QJsonArray arr;
-    for (ObjectInfo* pInfo : m_svcObjects)
+    for (const ObjectBase* pInfo : m_svcObjects)
         arr.push_back(pInfo->createJsonInfo());
     return obj;
 }
@@ -138,7 +144,7 @@ QMap<QString, QString> ComponentProxyONB::getChannelsNameTypeMap(ONBChannelType 
 
     foreach(auto channel, channels)
     {
-        map.insert(channel->name(), type != Inputs ? channel->writeTypeString() : channel->readTypeString());
+        map.insert(channel->name(), channel->typeName());
     }
 
     return map;
@@ -205,7 +211,7 @@ void ComponentProxyONB::sendObject(QString name)
     //    if (value.isValid())
     //        obj->setValue(value);
 
-    sendMessage(obj->description().id, obj->read());
+    sendMessage(obj->id, obj->read());
 }
 
 void ComponentProxyONB::requestObject(unsigned char oid)
@@ -218,8 +224,8 @@ void ComponentProxyONB::requestObject(QString name)
 {
     if (!m_objectMap.contains(name))
         return;
-    ObjectInfo *obj = m_objectMap[name];
-    sendMessage(obj->description().id);
+    const ObjectBase *obj = m_objectMap[name];
+    sendMessage(obj->id);
 }
 
 void ComponentProxyONB::subscribe(QString name, int period_ms)
@@ -231,17 +237,17 @@ void ComponentProxyONB::subscribe(QString name, int period_ms)
     {
         if (m_busType == BusSwonb || m_busType == BusRadio)
         {
-            obj->m_extInfo.autoPeriodMs = period_ms;
+            obj->m_autoPeriodMs = period_ms;
             obj->mAutoRequestTimer = new QTimer(obj);
             connect(obj->mAutoRequestTimer, &QTimer::timeout, obj, &ObjectProxy::request);
-            obj->mAutoRequestTimer->start(obj->m_extInfo.autoPeriodMs);
+            obj->mAutoRequestTimer->start(obj->m_autoPeriodMs);
         }
         else
         {
             QByteArray ba;
             ba.append(reinterpret_cast<const char*>(&period_ms), sizeof(int));
-            ba.append(obj->description().id);
-            if (obj->m_extInfo.needTimestamp)
+            ba.append(obj->id);
+            if (obj->m_needTimestamp)
                 sendServiceMessage(svcTimedRequest, ba);
             else
                 sendServiceMessage(svcSubscribe, ba);
@@ -268,7 +274,7 @@ void ComponentProxyONB::unsubscribe(QString name)
     else
     {
         QByteArray ba;
-        ba.append(obj->description().id);
+        ba.append(obj->id);
         sendServiceMessage(svcUnsubscribe, ba);
     }
 }
@@ -288,25 +294,25 @@ void ComponentProxyONB::setComponentName(QString name)
 void ComponentProxyONB::extractPrototype(ComponentProxyONB *proto) const
 {
     //    proto->m_componentName = "";
-    proto->m_classID = m_classID;
-    proto->m_className = m_className.isEmpty() ? m_componentName : m_className; // !!! class name is extracted from component name !!!
-    proto->m_componentInfo = m_componentInfo;
+    proto->m_classID = m_classID.value();
+    proto->m_className = QString(m_className).isEmpty() ? m_componentName.value() : m_className.value(); // !!! class name is extracted from component name !!!
+    proto->m_componentInfo = m_componentInfo.value();
     proto->m_serialNumber = 0;
-    proto->m_version = m_version;
-    proto->m_releaseInfo = m_releaseInfo;
-    proto->m_hardwareInfo = m_hardwareInfo;
-    proto->m_burnCount = m_burnCount;
-    proto->m_objectCount = m_objectCount;
-    proto->m_busType = m_busType;
-    proto->m_iconData = m_iconData;
+    proto->m_version = m_version.value();
+    proto->m_releaseInfo = m_releaseInfo.value();
+    proto->m_hardwareInfo = m_hardwareInfo.value();
+    proto->m_burnCount = m_burnCount.value();
+    proto->m_objectCount = m_objectCount.value();
+    proto->m_busType = m_busType.value();
+    proto->m_iconData = m_iconData.value();
 
     for (ObjectProxy *p: m_objects)
     {
         if (!p)
             continue;
-        ObjectProxy *obj = new ObjectProxy(proto, p->mDesc);
+        ObjectProxy *obj = proto->createObject(p->description());//new ObjectProxy(proto, p->description());
         proto->m_objects << obj;
-        proto->m_objectMap[p->mDesc.name] = obj;
+        proto->m_objectMap[p->name()] = obj;
     }
 
     proto->m_componentInfoValid = m_componentInfoValid;
@@ -388,9 +394,9 @@ void ComponentProxyONB::parseServiceMessage(unsigned char oid, const QByteArray 
         unsigned char _oid = data[0];
         if (_oid < m_objectCount && m_objects[_oid])
         {
-            ObjectInfo *obj = m_objects[_oid];
+            ObjectProxy *obj = m_objects[_oid];
             unsigned char metavalue = oid - svcObjectInfo;
-            bool changed = obj->writeMeta(data.mid(1), static_cast<ObjectInfo::MetaValue>(metavalue));
+            bool changed = obj->writeMeta(data.mid(1), static_cast<ObjectBase::MetaValue>(metavalue));
             if (changed)
                 checkForReady();
         }
@@ -415,7 +421,7 @@ void ComponentProxyONB::parseServiceMessage(unsigned char oid, const QByteArray 
             switch (failedOid)
             {
             case svcRequestAllInfo:
-                for (ObjectInfo *obj: m_svcObjects)
+                for (ObjectBase *obj: m_svcObjects)
                     sendServiceMessage(obj->description().id);
                 break;
 
@@ -425,19 +431,19 @@ void ComponentProxyONB::parseServiceMessage(unsigned char oid, const QByteArray 
                 break;
 
             case svcAutoRequest:
-                // TODO: change firmware to return details
+                //! @TODO: change firmware to return details
                 qDebug() << "[ComponentProxyONB] subscribe failed";
                 break;
 
             case svcTimedRequest:
-                // TODO: create timer and set flag needTimestamp
+                //! @TODO: create timer and set flag needTimestamp
                 qDebug() << "[ComponentProxyONB] subscribe with timestamp failed";
                 break;
 
             default:;
             }
 
-            // TODO: if service object doesn't exist, just check it
+            //! @TODO: if service object doesn't exist, just check it
             //            if (failedOid < svcObjectInfo)
             //                receiveServiceObject(failedOid, ByteArray());
         }
@@ -493,13 +499,41 @@ void ComponentProxyONB::sendMessage(unsigned char oid, const QByteArray &data)
 
 //---------------------------------------------------------
 
-unsigned char ComponentProxyONB::bindSvcObject(ObjectInfo &obj)
+unsigned char ComponentProxyONB::bindSvcObject(ObjectBase &obj)
 {
+    obj.m_description.flags |= ObjectBase::ReadWrite;
     m_svcObjects << &obj;
     obj.setId(m_svcObjects.size() - 1);
     return obj.description().id;
 }
 //---------------------------------------------------------
+
+ObjectProxy *ComponentProxyONB::createObject(const ObjectDescription &desc)
+{
+    switch (static_cast<ObjectBase::Type>(desc.type))
+    {
+        case ObjectBase::Bool: return new ObjectProxyImpl<bool>(this, desc);
+        case ObjectBase::Int: return new ObjectProxyImpl<int>(this, desc);
+        case ObjectBase::UInt: return new ObjectProxyImpl<unsigned int>(this, desc);
+        case ObjectBase::LongLong: return new ObjectProxyImpl<int64_t>(this, desc);
+        case ObjectBase::ULongLong: return new ObjectProxyImpl<uint64_t>(this, desc);
+        case ObjectBase::Double: return new ObjectProxyImpl<double>(this, desc);
+        case ObjectBase::Long: return new ObjectProxyImpl<int32_t>(this, desc);
+        case ObjectBase::Short: return new ObjectProxyImpl<int16_t>(this, desc);
+        case ObjectBase::Char: return new ObjectProxyImpl<char>(this, desc);
+        case ObjectBase::ULong: return new ObjectProxyImpl<uint32_t>(this, desc);
+        case ObjectBase::UShort: return new ObjectProxyImpl<uint16_t>(this, desc);
+        case ObjectBase::UChar: return new ObjectProxyImpl<uint8_t>(this, desc);
+        case ObjectBase::Float: return new ObjectProxyImpl<float>(this, desc);
+        case ObjectBase::SChar: return new ObjectProxyImpl<int8_t>(this, desc);
+
+        case ObjectBase::String: return new ObjectProxyImpl<QString>(this, desc);
+        case ObjectBase::Common: return new ObjectProxyImpl<QByteArray>(this, desc);
+        case ObjectBase::Variant: return new ObjectProxyImpl<QVariant>(this, desc);
+
+        default: return nullptr;
+    }
+}
 
 void ComponentProxyONB::prepareObject(const ObjectDescription &desc)
 {
@@ -515,18 +549,23 @@ void ComponentProxyONB::prepareObject(const ObjectDescription &desc)
     if (obj)
     {
         m_objectMap.remove(obj->name());
-        obj->setDescription(desc);
+//        obj->setDescription(desc);
+        delete obj; //! @warning this is OPASNO!! or not, need to test
     }
-    else
-    {
-        obj = new ObjectProxy(this, desc);
-    }
+//    else
+//    {
+        obj = createObject(desc); //new ObjectProxy(this, desc);
+//    }
+
+    if (!obj)
+        qDebug("PIZDEC koro4e blya: no object created for given type");
+
     m_objects[oid] = obj;
     m_objectMap[desc.name] = obj;
 
     // TODO: new thing, need testing!!!
     if (!property(obj->name().toUtf8()).isValid())
-        setProperty(obj->name().toUtf8(), QVariant(static_cast<QVariant::Type>(obj->description().rType)));
+        setProperty(obj->name().toUtf8(), QVariant(static_cast<QVariant::Type>(obj->type())));
 
     // check if all object info is received
     checkForReady();

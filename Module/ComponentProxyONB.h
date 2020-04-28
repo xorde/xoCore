@@ -76,7 +76,7 @@ public:
     QString releaseInfo() const { return m_releaseInfo; }
     QString hardwareInfo() const { return m_hardwareInfo; }
     int burnCount() const { return m_burnCount; }
-    BusType busType() const {return static_cast<BusType>(m_busType);}
+    BusType busType() const {return static_cast<BusType>(m_busType.value());}
     QString componentType() const {return m_className;}
     const QByteArray &iconData() const {return m_iconData;}
     QImage icon() const {return QImage::fromData(m_iconData);}
@@ -107,7 +107,7 @@ private:
     QVector<ObjectProxy*> m_objects;
     QMap<QString, ObjectProxy*> m_objectMap;
     QVector<QByteArray> m_objBuffers;
-    QVector<ObjectInfo*> m_svcObjects;
+    QVector<ObjectBase*> m_svcObjects;
 
     bool m_componentInfoValid;
     bool m_objectsInfoValid;
@@ -118,22 +118,24 @@ private:
     unsigned short m_id;
 
     //! meta-info about the component
-    uint32_t m_classID = 0;
-    QString m_componentName; //!< core-side name of the component instance
-    QString m_componentInfo = "";
-    uint32_t m_serialNumber = 0;
-    unsigned short m_version = 0;
-    QString m_releaseInfo = "";
-    QString m_hardwareInfo = "";
-    uint32_t m_burnCount = 0;
-    unsigned char m_objectCount = 0;
-    unsigned char m_busType = 0;
-    QString m_className;
-    QByteArray m_iconData;
+    xoUInt32 m_classID;
+    xoString m_componentName; //!< core-side name of the component instance
+    xoString m_componentInfo;
+    xoUInt32 m_serialNumber;
+    xoUInt16 m_version;
+    xoString m_releaseInfo;
+    xoString m_hardwareInfo;
+    xoUInt32 m_burnCount;
+    xoUInt8 m_objectCount;
+    xoUInt8 m_busType;
+    xoString m_className;
+    xoByteArray m_iconData;
 
     //! create bindings for service objects
-    unsigned char bindSvcObject(ObjectInfo &obj);
+    unsigned char bindSvcObject(ObjectBase &obj);
 
+    //! this is ObjectProxy factory - important thing
+    ObjectProxy *createObject(const ObjectDescription &desc);
     //! create ObjectInfo with bindings to local buffer
     void prepareObject(const ObjectDescription &desc);
     //! check if ObjectInfo description read completed (and emit the signal)

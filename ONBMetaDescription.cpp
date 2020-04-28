@@ -6,19 +6,23 @@
 
 ONBMetaDescription::ONBMetaDescription(ObjectProxy *object, QObject *parent) : AbstractMetaDescription(parent), object(object)
 {
-    typeName = QVariant::typeToName(object->description().rType);
-    displayName = object->description().name;
-    name = object->description().name;
+    typeName = object->typeName();
+    displayName = object->name();
+    name = object->name();
 
-    bool ok;
-    m_min = object->min().toDouble(&ok);
-    if (ok) hasMin = true;
-    m_max = object->max().toDouble(&ok);
-    if (ok) hasMax = true;
-    m_step = object->step().toDouble(&ok);
-    if (ok) hasStep = true;
-    m_def = object->def().toString();
-    hasDefault = (!m_def.isEmpty());
+    hasMin = object->testExtFlag(ObjectBase::MV_Min);
+    hasMax = object->testExtFlag(ObjectBase::MV_Max);
+    hasDefault = object->testExtFlag(ObjectBase::MV_Def);
+    hasStep = object->testExtFlag(ObjectBase::MV_Step);
+
+    if (hasMin)
+        m_min = object->min().toDouble();
+    if (hasMax)
+        m_max = object->max().toDouble();
+    if (hasStep)
+        m_step = object->step().toDouble();
+    if (hasDefault)
+        m_def = object->def().toString();
 
     suffix = object->unit();
     description = object->hint();

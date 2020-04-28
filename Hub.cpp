@@ -153,7 +153,7 @@ void Hub::linkConnection(ComponentConnection *connection, bool shouldConnect)
         {
             if(m_isEnabled && shouldConnect)
             {
-                int RMIP = (connection->RMIP > 0) ? connection->RMIP : objOut->RMIP();
+                int RMIP = (connection->RMIP > 0) ? connection->RMIP : objOut->RMIP;
                 ObjectProxy::link(objOut, objIn);
                 compOut->subscribe(connection->outputName, RMIP);
             }

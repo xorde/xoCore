@@ -75,10 +75,10 @@ QList<ModuleConfig*> ModuleProxyONB::getModuleConfig(QString in_my_name, bool in
         compConf->parent = in_my_name.isEmpty() ? name() : in_my_name;
 
         for (auto io : component->getOutputs())
-            compConf->outputs[io->name()] = new IOChannel(io->name(), io->writeTypeString());
+            compConf->outputs[io->name()] = new IOChannel(io->name(), io->typeName());
 
         for (auto io : component->getInputs())
-            compConf->inputs[io->name()] = new IOChannel(io->name(), io->readTypeString());
+            compConf->inputs[io->name()] = new IOChannel(io->name(), io->typeName());
 
         list.push_back(compConf);
     }
@@ -326,7 +326,7 @@ void ModuleProxyONB::parseClassInfo(const ONBPacket &packet)
         c->receiveData(packet);
         if (c->isReady())
         {
-            if (c->m_className.isEmpty())
+            if (QString(c->m_className).isEmpty())
                 c->m_className = c->componentName();
             m_classMap[c->m_className] = cid;
         }
@@ -369,8 +369,8 @@ void ModuleProxyONB::componentReady()
     }
 
     ComponentProxyONB *proto = m_classInfo[cid];
-    if (comp->m_className.isEmpty())
-        comp->m_className = proto->m_className;
+    if (QString(comp->m_className).isEmpty())
+        comp->m_className = proto->m_className.value();
 
     if (!proto->isFactory())
         comp->setComponentName(comp->componentType() + QString().sprintf("_%08X", comp->serialNumber()));
