@@ -24,7 +24,7 @@ public:
     bool applicationIsRunning(QString applicationName);
     void updateModuleStartType(QString moduleName, ModuleStartType type);
     void refreshConfigsForModule(QString moduleName);
-    QString getModulePath(QString applicationName, ModuleConfig::Type type);
+    QString getModulePath(QString moduleName, ModuleConfig::Type type);
     void parseApplicationsStartOptions();
 
     QList<QString> pluginList;

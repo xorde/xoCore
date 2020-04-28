@@ -200,7 +200,7 @@ void Loader::refreshConfigsForModule(QString moduleName)
     }
 }
 
-QString Loader::getModulePath(QString applicationName, ModuleConfig::Type type)
+QString Loader::getModulePath(QString moduleName, ModuleConfig::Type type)
 {
     QString suffix;
 #ifdef QT_DEBUG
@@ -208,11 +208,22 @@ QString Loader::getModulePath(QString applicationName, ModuleConfig::Type type)
 #endif
 
     QString extension;
+    QString folder;
     switch (type)
     {
-        case ModuleConfig::Type::MODULE: extension = Core::ApplicationExtensionDot; break;
-        case ModuleConfig::Type::PLUGIN: extension = Core::PluginExtensionDot; break;
+        case ModuleConfig::Type::MODULE:
+        {
+            folder = Core::FolderModules;
+            extension = Core::ApplicationExtensionDot;
+            break;
+        }
+        case ModuleConfig::Type::PLUGIN:
+        {
+            folder = Core::FolderPlugins;
+            extension = Core::PluginExtensionDot;
+            break;
+        }
     }
 
-    return Core::FolderModules + "/" + applicationName + "/" + applicationName + suffix + extension;
+    return folder + moduleName + "/" + moduleName + suffix + extension;
 }
