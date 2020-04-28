@@ -9,6 +9,7 @@
 #include "Hub.h"
 #include "Server.h"
 #include "ModuleStartType.h"
+#include "xoCorePlugin.h"
 #include "Module/ModuleProxyONB.h"
 
 class XOCORESHARED_EXPORT Loader : public QObject
@@ -17,6 +18,8 @@ class XOCORESHARED_EXPORT Loader : public QObject
 public:
     explicit Loader(Server* server, Hub* hub, QObject *parent = nullptr);
     ~Loader();
+
+    void load();
 
     bool getApplicationStartType(QString applicationName);
     void startApplication(QString applicationName);
@@ -27,6 +30,7 @@ public:
     QString getModulePath(QString moduleName, ModuleConfig::Type type);
     void parseApplicationsStartOptions();
 
+    QMap<QString, xoCorePlugin*> corePluginsByName;
     QList<QString> pluginList;
     QList<QString> applicationList;
 

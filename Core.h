@@ -20,10 +20,13 @@ class XOCORESHARED_EXPORT Core : public QObject
 {
     Q_OBJECT
 public:
-    explicit Core(QObject *parent = nullptr);
-    virtual ~Core() override;
+    static Core* Instance()
+    {
+        static Core instance;
+        return &instance;
+    };
 
-    static Core* Instance();
+    void init();
 
     static QString FolderConfigs;
     static QString FolderSchemes;
@@ -50,15 +53,13 @@ public:
     bool loadScheme(QString schemePath);
     bool deleteScheme(QString schemePath);
 
-    void loadCorePlugins();
-    QMap<QString, xoCorePlugin*> getCorePlugins();
-
     ComponentInfo *createComponentInScheme(QString componentType, QString moduleName);
     bool removeComponentFromScheme(ComponentInfo* componentInfo);
 
 
 private:
-    QMap<QString, xoCorePlugin*> m_corePlugins;
+    explicit Core(QObject *parent = nullptr);
+    virtual ~Core() override;
 
     Server *m_server = nullptr;
     Scheme *m_scheme = nullptr;
@@ -66,8 +67,6 @@ private:
     Loader* loader = nullptr;
 
     QMap<QString, int> m_componentCountByModuleName;
-
-    static Core* _instance;
 };
 
 #endif // CORE_H

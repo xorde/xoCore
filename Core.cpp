@@ -6,8 +6,6 @@
 #include <QApplication>
 #include <QPluginLoader>
 
-Core *Core::_instance = nullptr;
-
 QString Core::FolderConfigs = "xoConfigs/";
 QString Core::FolderSchemes = "xoSchemes/";
 QString Core::FolderPlugins = "xoPlugins/";
@@ -55,34 +53,7 @@ const QString Core::FileExtensionConfigDot = "." + Core::FileExtensionConfig;
 
 Core::Core(QObject *parent) : QObject(parent)
 {
-    qRegisterMetaType<ONBPacket>("ONBPacket");
 
-    QString appPath = QCoreApplication::applicationDirPath() + "/";
-
-    FolderConfigs.prepend(appPath);
-    FolderSchemes.prepend(appPath);
-    FolderPlugins.prepend(appPath);
-    FolderModules.prepend(appPath);
-    FolderCorePlugins.prepend(appPath);
-
-    _instance = this;
-    FileUtilities::createIfNotExists(FolderConfigs);
-    FileUtilities::createIfNotExists(FolderSchemes);
-    FileUtilities::createIfNotExists(FolderPlugins);
-    FileUtilities::createIfNotExists(FolderModules);
-
-    m_server = new Server(this);
-    m_server->startListening();
-
-    m_scheme = new Scheme(this);
-    connect(m_scheme, &Scheme::loaded, this, [=]() { GlobalConsole::writeLine("Scheme loaded: " + m_scheme->getLastLoadedPath()); }, Qt::QueuedConnection);
-
-    m_hub = new Hub(this);
-    m_hub->setScheme(m_scheme);
-
-    connect(m_hub, &Hub::enableChanged, this, [=](bool enabled) { GlobalConsole::writeLine(QString("Scheme ") + (enabled ? "started" : "stopped")); }, Qt::QueuedConnection);
-
-    loader = new Loader(m_server, m_hub, this);
 }
 
 Core::~Core()
@@ -167,42 +138,36 @@ bool Core::deleteScheme(QString schemePath)
     return QFile::remove(schemePath);
 }
 
-void Core::loadCorePlugins()
+void Core::init()
 {
-#ifdef Q_OS_UNIX
-    auto corePluginPaths = FileUtilities::getFilesOfType(FolderCorePlugins, "so", false, true);
-#else
-    auto corePluginPaths = FileUtilities::getFilesOfType(FolderCorePlugins, "dll", false, true);
-#endif
+    qRegisterMetaType<ONBPacket>("ONBPacket");
 
-    for(auto path : corePluginPaths)
-    {
-        QFileInfo fileInfo(path);
+    QString appPath = QCoreApplication::applicationDirPath() + "/";
 
-        QString corePluginName = FileUtilities::filename(path);
+    FolderConfigs.prepend(appPath);
+    FolderSchemes.prepend(appPath);
+    FolderPlugins.prepend(appPath);
+    FolderModules.prepend(appPath);
+    FolderCorePlugins.prepend(appPath);
 
-        auto plugin = QPluginLoader(path).instance();
-        if (plugin)
-        {
-            auto corePlugin = qobject_cast<xoCorePlugin*>(plugin);
-            if (corePlugin)
-            {
-                m_corePlugins.insert(corePluginName, corePlugin);
-                GlobalConsole::writeItem("xoCorePlugin loaded: " + corePluginName);
-            }
-        }
-    }
+    FileUtilities::createIfNotExists(FolderConfigs);
+    FileUtilities::createIfNotExists(FolderSchemes);
+    FileUtilities::createIfNotExists(FolderPlugins);
+    FileUtilities::createIfNotExists(FolderModules);
 
-}
+    m_server = new Server(this);
+    m_server->startListening();
 
-QMap<QString, xoCorePlugin *> Core::getCorePlugins()
-{
-    return m_corePlugins;
-}
+    m_scheme = new Scheme(this);
+    connect(m_scheme, &Scheme::loaded, this, [=]() { GlobalConsole::writeLine("Scheme loaded: " + m_scheme->getLastLoadedPath()); }, Qt::QueuedConnection);
 
-Core *Core::Instance()
-{
-    return _instance;
+    m_hub = new Hub(this);
+    m_hub->setScheme(m_scheme);
+
+    connect(m_hub, &Hub::enableChanged, this, [=](bool enabled) { GlobalConsole::writeLine(QString("Scheme ") + (enabled ? "started" : "stopped")); }, Qt::QueuedConnection);
+
+    loader = new Loader(m_server, m_hub, this);
+    loader->load();
 }
 
 Server *Core::getServer()

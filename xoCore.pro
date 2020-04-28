@@ -34,7 +34,8 @@ SOURCES += \
     Module/ComponentProxyONB.cpp \
     Module/ModuleProxyONB.cpp \
     ONBMetaDescription.cpp \
-    xoCorePlugin.cpp
+    xoCorePlugin.cpp \
+    xoPrimitiveConsole.cpp
 
 HEADERS += \
     Loader.h \
@@ -57,7 +58,8 @@ HEADERS += \
     Module/ComponentProxyONB.h \
     Module/ModuleProxyONB.h \
     ONBMetaDescription.h \
-    ConfigManager.h
+    ConfigManager.h \
+    xoPrimitiveConsole.h
 
 
 DISTFILES += xoCorePlugin.pri xoCore.pri

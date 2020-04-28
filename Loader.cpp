@@ -2,11 +2,29 @@
 #include "Loader.h"
 #include "ModuleList.h"
 #include "ModuleConfig.h"
+#include "GlobalConsole.h"
+#include "xoPrimitiveConsole.h"
 
 #include <QDir>
 #include <QApplication>
+#include <QPluginLoader>
 
 Loader::Loader(Server *server, Hub *hub, QObject *parent) : QObject(parent), server(server), hub(hub)
+{
+
+}
+
+Loader::~Loader()
+{
+    for(auto process : processesByAppName)
+    {
+        process->kill();
+        process->waitForFinished();
+    }
+    processesByAppName.clear();
+}
+
+void Loader::load()
 {
     connect(server, &Server::moduleConnection, this, [=](ModuleProxyONB *module)
     {
@@ -73,16 +91,36 @@ Loader::Loader(Server *server, Hub *hub, QObject *parent) : QObject(parent), ser
 
         if(startTypeByAppName[applicationName] == HOT) startApplication(applicationName);
     }
-}
 
-Loader::~Loader()
-{
-    for(auto process : processesByAppName)
+    bool uiProvided = false;
+    QDir corePluginsDirectory(Core::FolderCorePlugins);
+    for(auto corePluginPath : corePluginsDirectory.entryList(QStringList{"*" + Core::PluginExtensionDot}))
     {
-        process->kill();
-        process->waitForFinished();
+        QFileInfo fileInfo(corePluginPath);
+        QString pluginName = fileInfo.completeBaseName();
+        auto filepath = corePluginsDirectory.absoluteFilePath(corePluginPath);
+
+        auto plugin = QPluginLoader(filepath).instance();
+        if (plugin)
+        {
+            auto corePlugin = qobject_cast<xoCorePlugin*>(plugin);
+            if (corePlugin)
+            {
+                corePlugin->start();
+                if(!uiProvided)
+                    uiProvided = corePlugin->providesUI();
+
+                QString name = fileInfo.completeBaseName();
+                GlobalConsole::writeItem("xoCorePlugin loaded: " + pluginName);
+                corePluginsByName[pluginName] = corePlugin;
+            }
+        }
     }
-    processesByAppName.clear();
+    if (!uiProvided)
+    {
+        auto console = new xoPrimitiveConsole();
+        console->show();
+    }
 }
 
 void Loader::startApplication(QString applicationName)
