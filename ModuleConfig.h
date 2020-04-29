@@ -7,6 +7,8 @@
 #include <QJsonObject>
 #include <QMetaType>
 #include "xoCore_global.h"
+#include <QMetaType>
+#include <QHash>
 
 struct IOChannel
 {
