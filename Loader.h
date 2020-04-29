@@ -41,7 +41,7 @@ private:
     Server* server = nullptr;
     Hub* hub = nullptr;
 
-    QSet<QString> appNames;
+    QMap<QString, QString> appPathsByName;
     QSet<QString> names;
     QMap<QString, QProcess*> processesByAppName;
     QMap<QString, ModuleProxyONB*> moduleByName;

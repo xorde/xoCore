@@ -69,38 +69,88 @@ void Loader::load()
     ModuleList::Instance()->init();
     parseApplicationsStartOptions();
 
-    QDir pluginsDirectory(Core::FolderPlugins);
-    for(auto pluginName : pluginsDirectory.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
-    {
-        pluginList << pluginName;
+    QStringList appPaths;
+    QStringList pluginPaths;
+    QStringList corePluginPaths;
 
-        PluginManager::Instance()->load(pluginName, getModulePath(pluginName, ModuleConfig::Type::PLUGIN));
+    if(QDir(Core::FolderLaunchers).entryList(QStringList{"*" + Core::FileExtensionConfigDot}).isEmpty())
+    {
+        QDir applicationsDirectory(Core::FolderModules);
+        for(auto applicationName : applicationsDirectory.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
+            appPaths << getModulePath(applicationName, ModuleConfig::Type::MODULE);
+
+        QDir pluginsDirectory(Core::FolderPlugins);
+        for(auto pluginName : pluginsDirectory.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
+            pluginPaths << getModulePath(pluginName, ModuleConfig::Type::PLUGIN);
+
+    }
+    else
+    {
+        QRegExp regexp("(.+)\\s(\\d)");
+        QFile file(Core::FolderLaunchers + "default" + Core::FileExtensionConfigDot);
+        if(file.open(QIODevice::ReadOnly))
+        {
+            while (!file.atEnd())
+            {
+                regexp.indexIn(file.readLine());
+                QString path = regexp.cap(1);
+                QString extension = QFileInfo(path).suffix();
+                bool needed = regexp.cap(2).toInt() == 1;
+
+                if(!needed) continue;
+
+#ifdef QT_DEBUG
+                path.insert(path.length() - (extension.length() + 1), "d");
+#endif
+
+                if     (extension == Core::PluginExtension) pluginPaths << path;
+                else if(extension == Core::ApplicationExtension) appPaths << path;
+            }
+        }
     }
 
-    QDir applicationsDirectory(Core::FolderModules);
-    for(auto applicationName : applicationsDirectory.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
+    //временно тут
+    QDir corePluginsDirectory(Core::FolderCorePlugins);
+    for(auto corePluginPath : corePluginsDirectory.entryList(QStringList{"*" + Core::PluginExtensionDot}))
+        corePluginPaths << corePluginsDirectory.absoluteFilePath(corePluginPath);
+
+    for(auto appPath : appPaths)
     {
-        applicationList << applicationName;
+        QFileInfo info(appPath);
+        QString appName = info.completeBaseName();
+#ifdef QT_DEBUG
+        appName.chop(1);
+#endif
 
-        appNames.insert(applicationName);
+        applicationList << appName;
 
-        QString path = getModulePath(applicationName, ModuleConfig::Type::MODULE);
+        appPathsByName[appName] = appPath;
 
-        QFileInfo info(path);
-        if(!info.exists()) { qDebug() << "Module doesn't exist" << applicationName; continue; }
+        if(!info.exists()) { qDebug() << "Module doesn't exist" << appName; continue; }
 
-        if(startTypeByAppName[applicationName] == HOT) startApplication(applicationName);
+        if(startTypeByAppName[appName] == HOT) startApplication(appName);
+    }
+
+    for(auto pluginPath : pluginPaths)
+    {
+        QFileInfo info(pluginPath);
+        QString pluginName = info.completeBaseName();
+#ifdef QT_DEBUG
+        pluginName.chop(1);
+#endif
+
+        pluginList << pluginName;
+
+        PluginManager::Instance()->load(pluginName, pluginPath);
     }
 
     bool uiProvided = false;
-    QDir corePluginsDirectory(Core::FolderCorePlugins);
-    for(auto corePluginPath : corePluginsDirectory.entryList(QStringList{"*" + Core::PluginExtensionDot}))
+    for(auto corePluginPath : corePluginPaths)
     {
-        QFileInfo fileInfo(corePluginPath);
-        QString pluginName = fileInfo.completeBaseName();
-        auto filepath = corePluginsDirectory.absoluteFilePath(corePluginPath);
+        QFileInfo info(corePluginPath);
+        QString pluginName = info.completeBaseName();
 
-        auto plugin = QPluginLoader(filepath).instance();
+        auto plugin = QPluginLoader(corePluginPath).instance();
         if (plugin)
         {
             auto corePlugin = qobject_cast<xoCorePlugin*>(plugin);
@@ -110,7 +160,7 @@ void Loader::load()
                 if(!uiProvided)
                     uiProvided = corePlugin->providesUI();
 
-                QString name = fileInfo.completeBaseName();
+                QString name = info.completeBaseName();
                 GlobalConsole::writeItem("xoCorePlugin loaded: " + pluginName);
                 corePluginsByName[pluginName] = corePlugin;
             }
@@ -125,13 +175,13 @@ void Loader::load()
 
 void Loader::startApplication(QString applicationName)
 {
-    if(!appNames.contains(applicationName)) return;
+    if(!appPathsByName.contains(applicationName)) return;
 
     if(processesByAppName.contains(applicationName)) return;
 
     auto process = new QProcess(this);
 
-    auto appPath = getModulePath(applicationName, ModuleConfig::Type::MODULE);
+    auto appPath = appPathsByName[applicationName];
 
     process->setWorkingDirectory(QFileInfo(appPath).dir().absolutePath());
     process->start(appPath, QStringList() << "-i" << "127.0.0.1" << "-p" << QString::number(server->getPort()));
@@ -153,7 +203,7 @@ bool Loader::getApplicationStartType(QString applicationName)
 
 void Loader::killApplication(QString applicationName)
 {
-    if(!appNames.contains(applicationName)) return;
+    if(!appPathsByName.contains(applicationName)) return;
 
     if(startTypeByAppName[applicationName] == HOT) return;
 
@@ -221,7 +271,7 @@ void Loader::refreshConfigsForModule(QString moduleName)
     QDir configsDir(configsPath);
     configsDir.removeRecursively();
 
-    if(appNames.contains(moduleName)) //является приложением
+    if(appPathsByName.contains(moduleName)) //является приложением
     {
         if(processesByAppName.contains(moduleName)) //приложение запущено
         {

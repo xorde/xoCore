@@ -33,6 +33,7 @@ public:
     static QString FolderModules;
     static QString FolderPlugins;
     static QString FolderCorePlugins;
+    static QString FolderLaunchers;
 
     static const QString FileExtensionScheme;
     static const QString FileExtensionConfig;

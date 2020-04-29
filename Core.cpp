@@ -11,6 +11,7 @@ QString Core::FolderSchemes = "xoSchemes/";
 QString Core::FolderPlugins = "xoPlugins/";
 QString Core::FolderModules = "xoModules/";
 QString Core::FolderCorePlugins = "xoCorePlugins/";
+QString Core::FolderLaunchers = "xoLaunchers/";
 
 #ifdef Q_OS_WIN
 
@@ -149,11 +150,13 @@ void Core::init()
     FolderPlugins.prepend(appPath);
     FolderModules.prepend(appPath);
     FolderCorePlugins.prepend(appPath);
+    FolderLaunchers.prepend(appPath);
 
     FileUtilities::createIfNotExists(FolderConfigs);
     FileUtilities::createIfNotExists(FolderSchemes);
     FileUtilities::createIfNotExists(FolderPlugins);
     FileUtilities::createIfNotExists(FolderModules);
+    FileUtilities::createIfNotExists(FolderLaunchers);
 
     m_server = new Server(this);
     m_server->startListening();
