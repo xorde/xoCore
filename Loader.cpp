@@ -83,36 +83,34 @@ void Loader::load()
         for(auto pluginName : pluginsDirectory.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
             pluginPaths << getModulePath(pluginName, ModuleConfig::Type::PLUGIN);
 
+        QDir corePluginsDirectory(Core::FolderCorePlugins);
+        for(auto corePluginPath : corePluginsDirectory.entryList(QStringList{"*" + Core::PluginExtensionDot}))
+            corePluginPaths << corePluginsDirectory.absoluteFilePath(corePluginPath);
     }
     else
     {
-        QRegExp regexp("(.+)\\s(\\d)");
+        QRegExp regexp("(core )?(.+)\\s(\\d)");
         QFile file(Core::FolderLaunchers + "default" + Core::FileExtensionConfigDot);
         if(file.open(QIODevice::ReadOnly))
         {
             while (!file.atEnd())
             {
                 regexp.indexIn(file.readLine());
-                QString path = regexp.cap(1);
+                QString path = regexp.cap(2);
                 QString extension = QFileInfo(path).suffix();
-                bool needed = regexp.cap(2).toInt() == 1;
+                bool needed = regexp.cap(3).toInt() == 1;
 
                 if(!needed) continue;
 
+                if (!regexp.cap(1).isEmpty()) { corePluginPaths << path; continue; }
 #ifdef QT_DEBUG
                 path.insert(path.length() - (extension.length() + 1), "d");
 #endif
-
                 if     (extension == Core::PluginExtension) pluginPaths << path;
                 else if(extension == Core::ApplicationExtension) appPaths << path;
             }
         }
     }
-
-    //временно тут
-    QDir corePluginsDirectory(Core::FolderCorePlugins);
-    for(auto corePluginPath : corePluginsDirectory.entryList(QStringList{"*" + Core::PluginExtensionDot}))
-        corePluginPaths << corePluginsDirectory.absoluteFilePath(corePluginPath);
 
     for(auto appPath : appPaths)
     {
