@@ -24,7 +24,7 @@ Loader::~Loader()
     processesByAppName.clear();
 }
 
-void Loader::load()
+void Loader::load(QString launchConfigPath)
 {
     connect(server, &Server::moduleConnection, this, [=](ModuleProxyONB *module)
     {
@@ -73,24 +73,10 @@ void Loader::load()
     QStringList pluginPaths;
     QStringList corePluginPaths;
 
-    if(QDir(Core::FolderLaunchers).entryList(QStringList{"*" + Core::FileExtensionConfigDot}).isEmpty())
-    {
-        QDir applicationsDirectory(Core::FolderModules);
-        for(auto applicationName : applicationsDirectory.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
-            appPaths << getModulePath(applicationName, ModuleConfig::Type::MODULE);
-
-        QDir pluginsDirectory(Core::FolderPlugins);
-        for(auto pluginName : pluginsDirectory.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
-            pluginPaths << getModulePath(pluginName, ModuleConfig::Type::PLUGIN);
-
-        QDir corePluginsDirectory(Core::FolderCorePlugins);
-        for(auto corePluginPath : corePluginsDirectory.entryList(QStringList{"*" + Core::PluginExtensionDot}))
-            corePluginPaths << corePluginsDirectory.absoluteFilePath(corePluginPath);
-    }
-    else
+    if(QFile::exists(launchConfigPath))
     {
         QRegExp regexp("(core )?(.+)\\s(\\d)");
-        QFile file(Core::FolderLaunchers + "default" + Core::FileExtensionConfigDot);
+        QFile file(launchConfigPath);
         if(file.open(QIODevice::ReadOnly))
         {
             while (!file.atEnd())
@@ -110,6 +96,20 @@ void Loader::load()
                 else if(extension == Core::ApplicationExtension) appPaths << path;
             }
         }
+    }
+    else
+    {
+        QDir applicationsDirectory(Core::FolderModules);
+        for(auto applicationName : applicationsDirectory.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
+            appPaths << getModulePath(applicationName, ModuleConfig::Type::MODULE);
+
+        QDir pluginsDirectory(Core::FolderPlugins);
+        for(auto pluginName : pluginsDirectory.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
+            pluginPaths << getModulePath(pluginName, ModuleConfig::Type::PLUGIN);
+
+        QDir corePluginsDirectory(Core::FolderCorePlugins);
+        for(auto corePluginPath : corePluginsDirectory.entryList(QStringList{"*" + Core::PluginExtensionDot}))
+            corePluginPaths << corePluginsDirectory.absoluteFilePath(corePluginPath);
     }
 
     for(auto appPath : appPaths)

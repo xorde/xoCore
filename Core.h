@@ -26,7 +26,7 @@ public:
         return &instance;
     };
 
-    void init();
+    void init(QString launchConfigPath);
 
     static QString FolderConfigs;
     static QString FolderSchemes;

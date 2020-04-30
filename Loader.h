@@ -19,7 +19,7 @@ public:
     explicit Loader(Server* server, Hub* hub, QObject *parent = nullptr);
     ~Loader();
 
-    void load();
+    void load(QString launchConfigPath);
 
     bool getApplicationStartType(QString applicationName);
     void startApplication(QString applicationName);

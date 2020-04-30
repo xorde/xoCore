@@ -139,7 +139,7 @@ bool Core::deleteScheme(QString schemePath)
     return QFile::remove(schemePath);
 }
 
-void Core::init()
+void Core::init(QString launchConfigPath)
 {
     qRegisterMetaType<ONBPacket>("ONBPacket");
 
@@ -170,7 +170,7 @@ void Core::init()
     connect(m_hub, &Hub::enableChanged, this, [=](bool enabled) { GlobalConsole::writeLine(QString("Scheme ") + (enabled ? "started" : "stopped")); }, Qt::QueuedConnection);
 
     loader = new Loader(m_server, m_hub, this);
-    loader->load();
+    loader->load(launchConfigPath);
 }
 
 Server *Core::getServer()
