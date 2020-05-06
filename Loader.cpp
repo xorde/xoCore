@@ -154,7 +154,6 @@ void Loader::load(QString launchConfigPath)
             auto corePlugin = qobject_cast<xoCorePlugin*>(plugin);
             if (corePlugin)
             {
-                corePlugin->start();
                 if(!uiProvided)
                     uiProvided = corePlugin->providesUI();
 
@@ -164,6 +163,9 @@ void Loader::load(QString launchConfigPath)
             }
         }
     }
+
+    for(auto&& corePlugin : corePluginsByName) corePlugin->start();
+
     if (!uiProvided)
     {
         auto console = new xoPrimitiveConsole();
