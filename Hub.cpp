@@ -13,18 +13,13 @@ Hub::Hub(QObject *parent) : QObject(parent)
 {
 }
 
-Hub::~Hub()
-{
-    for(auto connection : connections) disconnect(connection);
-}
-
 void Hub::setScheme(Scheme *scheme)
 {
     m_schemeConnections.clear();
 
     m_scheme = scheme;
 
-    connections << connect(m_scheme, &Scheme::componentsUpdated, [=]() { checkCurrentSchemeComponents(); });
+    if(m_scheme) connect(m_scheme, &Scheme::componentsUpdated, m_scheme, [=]() { checkCurrentSchemeComponents(); }, Qt::UniqueConnection);
 
     componentConnections.clear();
 

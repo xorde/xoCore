@@ -18,6 +18,7 @@ Loader::~Loader()
 {
     for(auto process : processesByAppName)
     {
+        process->blockSignals(true);
         process->kill();
         process->waitForFinished();
     }

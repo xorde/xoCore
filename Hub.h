@@ -45,7 +45,6 @@ class XOCORESHARED_EXPORT Hub : public QObject
     Q_OBJECT
 public:
     Hub(QObject* parent = nullptr);
-    virtual ~Hub() override;
 
     void setScheme(Scheme* m_scheme);
     Scheme* getScheme();
@@ -88,8 +87,6 @@ protected:
     QHash<int, ModuleProxyONB*> modulesById;
     QHash<QString, ComponentProxyONB*> componentsByName;
     QSet<QString> componentConnections;
-
-    QList<QMetaObject::Connection> connections;
 };
 
 #endif // HUB_H
