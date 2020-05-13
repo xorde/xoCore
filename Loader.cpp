@@ -73,6 +73,8 @@ void Loader::load(QString launchConfigPath)
     QStringList pluginPaths;
     QStringList corePluginPaths;
 
+    if(launchConfigPath.isEmpty()) launchConfigPath = Core::FolderLaunchers + "default" + Core::FileExtensionConfigDot;
+
     if(QFile::exists(launchConfigPath))
     {
         QRegExp regexp("(core )?(.+)\\s(\\d)");
