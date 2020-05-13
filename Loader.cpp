@@ -179,14 +179,15 @@ void Loader::startApplication(QString applicationName)
 
     if(processesByAppName.contains(applicationName)) return;
 
-    auto process = new QProcess(this);
-
     auto appPath = appPathsByName[applicationName];
 
+    auto process = new QProcess(this);
     process->setWorkingDirectory(QFileInfo(appPath).dir().absolutePath());
     process->start(appPath, QStringList() << "-i" << "127.0.0.1" << "-p" << QString::number(server->getPort()));
 
     processesByAppName[applicationName] = process;
+
+    connect(process, &QProcess::errorOccurred, process, [=](QProcess::ProcessError) { processesByAppName.remove(applicationName); });
 
     connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), process, [=](int, QProcess::ExitStatus)
     {
@@ -207,13 +208,16 @@ void Loader::killApplication(QString applicationName)
 
     if(startTypeByAppName[applicationName] == HOT) return;
 
+    moduleByName.remove(applicationName);
+
+    if(!processesByAppName.contains(applicationName)) return;
+
     auto process = processesByAppName[applicationName];
     process->kill();
     process->waitForFinished();
 
     processesByAppName.remove(applicationName);
 
-    moduleByName.remove(applicationName);
 }
 
 bool Loader::applicationIsRunning(QString applicationName)
