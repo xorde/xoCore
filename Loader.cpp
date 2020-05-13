@@ -18,9 +18,10 @@ Loader::~Loader()
 {
     for(auto process : processesByAppName)
     {
-        process->blockSignals(true);
+        process->disconnect();
         process->kill();
         process->waitForFinished();
+        delete process;
     }
     processesByAppName.clear();
 }
