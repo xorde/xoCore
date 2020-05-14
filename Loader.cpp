@@ -38,7 +38,7 @@ void Loader::load(QString launchConfigPath)
 
         hub->addModule(module);
 
-        connect(module, &ModuleProxyONB::ready, this, [=]() { Core::Instance()->getHub()->checkCurrentSchemeComponents(); }, Qt::QueuedConnection);
+        connect(module, &ModuleProxyONB::ready, module, [=]() { hub->checkCurrentSchemeComponents(); }, Qt::QueuedConnection);
 
         QString configsPath = Core::FolderConfigs + module->name();
         QDir dir(configsPath);
@@ -197,7 +197,11 @@ void Loader::startApplication(QString applicationName)
     {
         processesByAppName.remove(applicationName);
 
-        hub->checkCurrentSchemeComponents();
+        if(Core::Instance()->getScheme()->componentCountByModule.value(applicationName) > 0)
+        {
+            startApplication(applicationName);
+            hub->removeModule(applicationName);
+        }
     });
 }
 
@@ -221,7 +225,7 @@ void Loader::killApplication(QString applicationName)
     process->waitForFinished();
 
     processesByAppName.remove(applicationName);
-
+    hub->removeModule(applicationName);
 }
 
 bool Loader::applicationIsRunning(QString applicationName)

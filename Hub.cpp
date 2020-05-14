@@ -77,7 +77,6 @@ void Hub::addModule(ModuleProxyONB *module)
     m_moduleConnections << connect(module, &ModuleProxyONB::ready, [=]()
     {
         emit moduleReady(module);
-        emit componentAdded(module);
     });
 
     m_moduleConnections << connect(module, &ModuleProxyONB::componentKilled, [=](unsigned short componentID)
@@ -101,14 +100,17 @@ void Hub::addModule(ModuleProxyONB *module)
     module->enumerateClasses();
     module->enumerateComponents();
 
-    modulesById.insert(modulesById.count(), module);
+    modulesByName.insert(module->name(), module);
 }
 
-void Hub::removeModule(int moduleId)
+void Hub::removeModule(QString name)
 {
-    auto module = modulesById.take(moduleId);
+    auto module = modulesByName.take(name);
     emit componentKilled(module);
-    disconnect(module, nullptr, nullptr, nullptr);
+    module->disconnect();
+
+    for(auto&& componentName : module->componentNames()) module->deleteComponent(componentsByName.take(componentName)->componentName());
+
     delete module;
 }
 
@@ -167,12 +169,12 @@ bool Hub::isEnabled()
 
 QList<ModuleProxyONB *> Hub::getModules()
 {
-    return modulesById.values();
+    return modulesByName.values();
 }
 
 ModuleProxyONB *Hub::getModuleByName(const QString &name)
 {
-    for(auto module : modulesById.values())
+    for(auto module : modulesByName.values())
     {
         if (module->name().compare(name, Qt::CaseInsensitive) == 0)
         {
@@ -196,14 +198,9 @@ void Hub::checkCurrentSchemeComponents()
 {
     if (!m_scheme)
     {
-        //Removing all components
         for(auto module : getModules())
-        {
             for (auto compName : module->componentNames())
-            {
                 module->deleteComponent(compName);
-            }
-        }
         return;
     }
 
@@ -225,12 +222,9 @@ void Hub::checkCurrentSchemeComponents()
             auto module = getModuleByName(compHeader.moduleName);
 
             if (module)
-            {
                 module->createComponent(compHeader.componentType, compHeader.componentName);
-            }
         }
     };
-
 
     auto loader = Core::Instance()->getLoader();
     for(auto moduleName : componentCountByAppName.keys())
@@ -272,19 +266,16 @@ void Hub::checkCurrentSchemeComponents()
 
     startComponents(schemeComponents);
 
-    for(auto compInfo : m_scheme->components)
-    {
-        reloadComponentSettingsFromScheme(compInfo);
-    }
+    for(auto compInfo : m_scheme->components) reloadComponentSettingsFromScheme(compInfo);
+
+    setIsEnabled(m_isEnabled);
 }
 
 void Hub::reloadComponentSettingsFromScheme(QString compName)
 {
     if (!m_scheme) return;
 
-    auto compInfo = m_scheme->components[compName];
-
-    reloadComponentSettingsFromScheme(compInfo);
+    reloadComponentSettingsFromScheme(m_scheme->components[compName]);
 }
 
 void Hub::reloadComponentSettingsFromScheme(ComponentInfo *info)

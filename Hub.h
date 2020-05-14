@@ -49,7 +49,7 @@ public:
     void setScheme(Scheme* m_scheme);
     Scheme* getScheme();
     void addModule(ModuleProxyONB *connection);
-    void removeModule(int moduleId);
+    void removeModule(QString name);
 
     void setIsEnabled(bool enabled);
     void linkConnection(ComponentConnection* connection, bool shouldConnect);
@@ -84,7 +84,7 @@ protected:
 
     bool m_isEnabled = false;
 
-    QHash<int, ModuleProxyONB*> modulesById;
+    QHash<QString, ModuleProxyONB*> modulesByName;
     QHash<QString, ComponentProxyONB*> componentsByName;
     QSet<QString> componentConnections;
 };

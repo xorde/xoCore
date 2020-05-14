@@ -33,10 +33,10 @@ void Scheme::fromJson(const QJsonObject& in_obj)
     {
         QJsonObject object = value.toObject();
         auto compInfo = ComponentInfo::fromJson(object);
-        if (compInfo != nullptr)
-        {
-            components.insert(compInfo->name, compInfo);
-        }
+        if (compInfo == nullptr) continue;
+
+        components.insert(compInfo->name, compInfo);
+        componentCountByModule[compInfo->parentModule]++;
     }
 
     QJsonArray arrayConnections = in_obj.value("connections").toArray();
