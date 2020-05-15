@@ -21,8 +21,6 @@ void Hub::setScheme(Scheme *scheme)
 
     if(m_scheme) connect(m_scheme, &Scheme::componentsUpdated, m_scheme, [=]() { checkCurrentSchemeComponents(); }, Qt::UniqueConnection);
 
-    componentConnections.clear();
-
     emit schemeChanged(scheme);
 }
 
@@ -53,6 +51,8 @@ void Hub::addModule(ModuleProxyONB *module)
             emit componentAdded(component);
             qDebug() << "COMP ADDED" << component->componentName();
             reloadComponentSettingsFromScheme(component->componentName());
+
+            linkComponentConnections(component, m_isEnabled);
         });
 
         m_moduleConnections << connect(component, &ComponentProxyONB::infoChanged, [=]()
@@ -84,6 +84,9 @@ void Hub::addModule(ModuleProxyONB *module)
         auto component = module->component(componentID);
         QString componentName = component->componentName();
         componentsByName.remove(componentName);
+
+        linkComponentConnections(component, false);
+
         emit componentKilled(component);
     });
 
@@ -109,7 +112,12 @@ void Hub::removeModule(QString name)
     emit componentKilled(module);
     module->disconnect();
 
-    for(auto&& componentName : module->componentNames()) module->deleteComponent(componentsByName.take(componentName)->componentName());
+    for(auto&& componentName : module->componentNames())
+    {
+        linkComponentConnections(module->component(componentName), false);
+        module->deleteComponent(componentName);
+        componentsByName.remove(componentName);
+    }
 
     delete module;
 }
@@ -121,10 +129,7 @@ void Hub::setIsEnabled(bool enabled)
     emit enableChanged(enabled);
 
     //Unlinking anyway
-    for(auto& connection : m_scheme->connections)
-    {
-        linkConnection(connection, false);
-    }
+    for(auto& connection : m_scheme->connections) linkConnection(connection, false);
 
     if (m_isEnabled)
     {
@@ -146,7 +151,6 @@ void Hub::linkConnection(ComponentConnection *connection, bool shouldConnect)
 
         if (objOut && objIn)
         {
-
             if(m_isEnabled && shouldConnect)
             {
                 int RMIP = (connection->RMIP > 0) ? connection->RMIP : objOut->RMIP();
@@ -289,4 +293,15 @@ void Hub::reloadComponentSettingsFromScheme(ComponentInfo *info)
         ONBSettings onbsettings(component);
         onbsettings.metaDescriptor()->loadFromJson(settingsToLoad);
     }
+}
+
+void Hub::linkComponentConnections(ComponentProxyONB *component, bool shouldConnect)
+{
+    for(auto&& output : component->getOutputs())
+        for(auto connection : m_scheme->connectionsByOutput[component->componentName() + "_" + output->name()])
+            linkConnection(connection, shouldConnect);
+
+    for(auto&& input : component->getInputs())
+        for(auto connection : m_scheme->connectionsByInput[component->componentName() + "_" + input->name()])
+            linkConnection(connection, shouldConnect);
 }

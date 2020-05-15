@@ -26,10 +26,8 @@ ComponentProxyONB::ComponentProxyONB(unsigned short componentID, QObject *parent
 
 ComponentProxyONB::~ComponentProxyONB()
 {
-    for (ObjectProxy* obj: m_objects)
-        delete obj;
-    for (ObjectInfo *obj: m_svcObjects)
-        delete obj;
+    qDeleteAll(m_objects);
+    qDeleteAll(m_svcObjects);
 }
 
 QJsonObject ComponentProxyONB::getInfoJson() const

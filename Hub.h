@@ -75,6 +75,7 @@ signals:
 protected:
     void reloadComponentSettingsFromScheme(QString compName);
     void reloadComponentSettingsFromScheme(ComponentInfo *compInfo);
+    void linkComponentConnections(ComponentProxyONB* component, bool shouldConnect);
 
     ConnectionHelper m_schemeConnections;
     ConnectionHelper m_moduleConnections;
@@ -86,7 +87,6 @@ protected:
 
     QHash<QString, ModuleProxyONB*> modulesByName;
     QHash<QString, ComponentProxyONB*> componentsByName;
-    QSet<QString> componentConnections;
 };
 
 #endif // HUB_H

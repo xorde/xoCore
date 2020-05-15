@@ -196,12 +196,9 @@ void Loader::startApplication(QString applicationName)
     connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), process, [=](int, QProcess::ExitStatus)
     {
         processesByAppName.remove(applicationName);
-
+        hub->removeModule(applicationName);
         if(Core::Instance()->getScheme()->componentCountByModule.value(applicationName) > 0)
-        {
             startApplication(applicationName);
-            hub->removeModule(applicationName);
-        }
     });
 }
 
