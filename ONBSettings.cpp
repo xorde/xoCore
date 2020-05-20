@@ -28,14 +28,14 @@ AbstractMetaDescriptor *ONBSettings::metaDescriptor()
         m_metaDescriptor->set(this);
         m_metaDescriptor->setClassName(m_objectName);
 
-//        foreach(auto desc, m_metaDescriptor->getProperties())
-//        {
-//            m_channelConnections << connect(desc, &AbstractMetaDescription::valueChanged, [=]()
-//            {
-//                qDebug() << "Through desc";
-//                emit propertyChanged(desc->name);
-//            });
-//        }
+        //        foreach(auto desc, m_metaDescriptor->getProperties())
+        //        {
+        //            m_channelConnections << connect(desc, &AbstractMetaDescription::valueChanged, [=]()
+        //            {
+        //                qDebug() << "Through desc";
+        //                emit propertyChanged(desc->name);
+        //            });
+        //        }
     }
     return m_metaDescriptor;
 }

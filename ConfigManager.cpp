@@ -22,17 +22,22 @@ void ConfigManager::writeModuleConfig(ModuleProxyONB *module)
         image.convertToFormat(QImage::Format_RGBA8888);
 
         if (image.size() != QSize(24, 24))
+        {
             image = image.scaled(24, 24, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-
+        }
         image.save(path + module->name() + ".png");
     }
 
     for(auto& name : module->classNames())
+    {
         writeComponentConfig(module, module->classInfo(name));
+    }
 }
 
 void ConfigManager::writeComponentConfig(ModuleProxyONB* module, ComponentProxyONB *component)
 {
+    QElapsedTimer t; t.restart();
+
     QString path = Core::FolderConfigs + module->name() + "/";
     verifyDir(module->name());
 
@@ -55,11 +60,20 @@ void ConfigManager::writeComponentConfig(ModuleProxyONB* module, ComponentProxyO
         {
             image.convertToFormat(QImage::Format_RGBA8888);
             if (image.size() != QSize(24, 24))
+            {
                 image = image.scaled(24, 24, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-
+            }
             image.save(path + module->name() + "_" + component->componentType() + ".png");
         }
+
+        qDebug() << "Config for component written" << component->componentType() << t.elapsed();
     }
+    else
+    {
+        qDebug() << "Config exists" << component->componentType() << t.elapsed();
+    }
+
+
 }
 
 ConfigManager::ConfigManager()
@@ -79,7 +93,9 @@ QJsonObject ConfigManager::readConfigurations()
     QJsonObject result;
 
     for(auto& moduleName : QDir(configsPath).entryList(QDir::Dirs | QDir::NoDotAndDotDot))
+    {
         result[moduleName] = ConfigManager::readConfiguration(configsPath + moduleName);
+    }
 
     return result;
 }

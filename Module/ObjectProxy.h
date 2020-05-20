@@ -90,6 +90,8 @@ public:
     }
     virtual bool setValue(QVariant v) override
     {
+        qDebug() << "ObjectProxyImpl set" << v;
+
         if (!v.canConvert(this->m_description.type))
             return false;
 

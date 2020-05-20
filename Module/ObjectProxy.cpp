@@ -68,8 +68,8 @@ bool ObjectProxy::link(ObjectProxy *publisher, ObjectProxy *subscriber)
     ObjectDescription &subDesc = subscriber->m_description;
 
     if ((pubDesc.size || pubDesc.type == Common) &&
-        (pubDesc.type == subDesc.type)
-         /*   && (pubDesc.size == subDesc.size || pubDesc.type == ObjectBase::Integer || pubDesc.type == ObjectBase::UInteger)*/ )
+        (pubDesc.type == subDesc.type) &&
+        (pubDesc.size == subDesc.size || pubDesc.type == ObjectBase::Integer || pubDesc.type == ObjectBase::UInteger))
     {
         subscriber->linkTo(publisher);
     }

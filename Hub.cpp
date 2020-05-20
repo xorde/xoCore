@@ -214,6 +214,8 @@ void Hub::checkCurrentSchemeComponents()
     QList<String3> schemeComponents;
     for (auto compInfo : m_scheme->components)
     {
+        if (!compInfo) continue;
+
         schemeComponents << String3(compInfo->name, compInfo->type, compInfo->parentModule);
 
         componentCountByAppName[compInfo->parentModule]++;
