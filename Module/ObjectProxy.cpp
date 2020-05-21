@@ -68,34 +68,32 @@ bool ObjectProxy::link(ObjectProxy *publisher, ObjectProxy *subscriber)
     ObjectDescription &subDesc = subscriber->m_description;
 
     if ((pubDesc.size || pubDesc.type == Common) &&
-        (pubDesc.type == subDesc.type) &&
-        (pubDesc.size == subDesc.size))
+        (pubDesc.type == subDesc.type)
+         /*   && (pubDesc.size == subDesc.size || pubDesc.type == ObjectBase::Integer || pubDesc.type == ObjectBase::UInteger)*/ )
     {
-        subscriber->mLinkedPublisher = publisher;
         subscriber->linkTo(publisher);
-        if (publisher->m_needTimestamp)
-        {
-            subscriber->m_needTimestamp = true;
-            connect(publisher, &ObjectProxy::received, subscriber, &ObjectProxy::sendTimed);
-        }
-        else if (!publisher->m_RMIP)
-        {
-            connect(publisher, &ObjectProxy::received, subscriber, &ObjectProxy::send);
-        }
-        else
-        {
-            connect(publisher, &ObjectProxy::valueChanged, subscriber, &ObjectProxy::send);
-        }
-        return true;
     }
-    return false;
+
+    // connect anyway!!
+    subscriber->mLinkedPublisher = publisher;
+    if (publisher->m_needTimestamp || !publisher->m_RMIP)
+    {
+        subscriber->m_needTimestamp = publisher->m_needTimestamp;
+        connect(publisher, &ObjectProxy::received, subscriber, &ObjectProxy::send);
+    }
+    else
+    {
+        connect(publisher, &ObjectProxy::valueChanged, subscriber, &ObjectProxy::send);
+    }
+    return true;
+
+//    return false;
 }
 
 bool ObjectProxy::unlink(ObjectProxy *publisher, ObjectProxy *subscriber)
 {
-    //! @todo if (subscriber->m_ptr != publisher->m_ptr) return false;
     subscriber->unlink();
-    disconnect(publisher, &ObjectProxy::received, subscriber, &ObjectProxy::sendTimed);
+    subscriber->mLinkedPublisher = nullptr;
     disconnect(publisher, &ObjectProxy::received, subscriber, &ObjectProxy::send);
     disconnect(publisher, &ObjectProxy::valueChanged, subscriber, &ObjectProxy::send);
     return true;
@@ -106,19 +104,25 @@ void ObjectProxy::request() const
     mComponent->requestObject(m_description.id);
 }
 
-void ObjectProxy::send() const
+void ObjectProxy::send()
 {
-    mComponent->sendObject(m_description.id);
+    if (mLinkedPublisher && (type() != mLinkedPublisher->type()))
+    {
+//        qDebug() << "[ObjectProxy] Performing type conversion...";
+        setValue(mLinkedPublisher->value());
+    }
+    if (m_needTimestamp)
+    {
+        if (mLinkedPublisher)
+            m_timestamp = mLinkedPublisher->m_timestamp;
+        mComponent->sendTimedObject(id);
+    }
+    else
+    {
+        mComponent->sendObject(id);
+    }
 }
-
-//! @todo !!! nado zapilit !!! send(QVariant) and received(QVariant) but only if needed!
-
-void ObjectProxy::sendTimed()
-{
-    if (mLinkedPublisher)
-        m_timestamp = mLinkedPublisher->m_timestamp;
-    mComponent->sendTimedObject(id);
-}
+//---------------------------------------------------------
 
 void ObjectProxy::subscribe(int period_ms)
 {

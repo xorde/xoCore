@@ -1,7 +1,7 @@
 #ifndef OBJECTPROXY_H
 #define OBJECTPROXY_H
 
-#include "Protocol/ObjectInfo.h"
+#include "Protocol/xoObjectBase.h"
 #include <QJsonObject>
 #include <QVariant>
 #include <QObject>
@@ -46,8 +46,7 @@ public:
 
 public slots:
     void request() const;
-    void send() const;
-    void sendTimed();
+    void send();
 
 signals:
     void valueChanged();
@@ -68,22 +67,12 @@ protected:
 
 private:
     ComponentProxyONB *mComponent;
-//    QVariant mMin, mMax, mDef, mStep;
-//    QString m_mimeType, m_hint, m_unit, m_options;
-//    QStringList m_enum;
     QTimer *mAutoRequestTimer = nullptr;
-//    const void *mDefaultReadPtr = nullptr;
     ObjectProxy *mLinkedPublisher = nullptr;
-//    unsigned short m_extFlagsReceived = 0;
 
     QVariant toVariant(const QByteArray &ba) const;
 
     friend class ComponentProxyONB;
-
-//    void *_allocate(Type t, unsigned short sz);
-//    void _free(void *ptr, Type t, unsigned short sz);
-//    void allocateBuffers();
-//    void destroyBuffers();
 };
 
 template <typename T>
@@ -103,7 +92,9 @@ public:
     {
         if (!v.canConvert(this->m_description.type))
             return false;
-        *this->m_ptr = v.value<T>();
+        T newValue = v.value<T>();
+        m_changed = (*this->m_ptr != newValue);
+        *this->m_ptr = newValue;
         if (m_changed)
             send();
         return true;
@@ -129,7 +120,10 @@ protected:
     {
         if (publisher->type() == type())
         {
-            this->m_ptr = dynamic_cast<const ObjectProxyImpl<T>*>(publisher)->m_ptr;
+            //! @warning This is dangerous!! or not
+            this->m_ptr = reinterpret_cast<const ObjectProxyImpl<T>*>(publisher)->m_ptr;
+            ObjectBase::m_description.size = publisher->description().size;
+//            this->m_ptr = dynamic_cast<const ObjectProxyImpl<T>*>(publisher)->m_ptr; // won't work
             return true;
         }
         return false;
@@ -138,6 +132,7 @@ protected:
     virtual void unlink() override
     {
         this->m_ptr = &this->m_value;
+        restoreDescription();
     }
 };
 

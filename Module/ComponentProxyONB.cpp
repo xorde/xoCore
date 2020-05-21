@@ -513,23 +513,41 @@ ObjectProxy *ComponentProxyONB::createObject(const ObjectDescription &desc)
     switch (static_cast<ObjectBase::Type>(desc.type))
     {
         case ObjectBase::Bool: return new ObjectProxyImpl<bool>(this, desc);
-        case ObjectBase::Int: return new ObjectProxyImpl<int>(this, desc);
-        case ObjectBase::UInt: return new ObjectProxyImpl<unsigned int>(this, desc);
-        case ObjectBase::LongLong: return new ObjectProxyImpl<int64_t>(this, desc);
-        case ObjectBase::ULongLong: return new ObjectProxyImpl<uint64_t>(this, desc);
+        case ObjectBase::Integer:
+        switch (desc.size)
+        {
+            case 1: return new ObjectProxyImpl<int8_t>(this, desc);
+            case 2: return new ObjectProxyImpl<int16_t>(this, desc);
+            case 4: return new ObjectProxyImpl<int32_t>(this, desc);
+            case 8: return new ObjectProxyImpl<int64_t>(this, desc);
+            default: return new ObjectProxyImpl<int>(this, desc);
+        }
+        case ObjectBase::UInteger:
+        switch (desc.size)
+        {
+            case 1: return new ObjectProxyImpl<uint8_t>(this, desc);
+            case 2: return new ObjectProxyImpl<uint16_t>(this, desc);
+            case 4: return new ObjectProxyImpl<uint32_t>(this, desc);
+            case 8: return new ObjectProxyImpl<uint64_t>(this, desc);
+            default: return new ObjectProxyImpl<unsigned int>(this, desc);
+        }
+//        case ObjectBase::LongLong: return new ObjectProxyImpl<int64_t>(this, desc);
+//        case ObjectBase::ULongLong: return new ObjectProxyImpl<uint64_t>(this, desc);
         case ObjectBase::Double: return new ObjectProxyImpl<double>(this, desc);
-        case ObjectBase::Long: return new ObjectProxyImpl<int32_t>(this, desc);
-        case ObjectBase::Short: return new ObjectProxyImpl<int16_t>(this, desc);
+//        case ObjectBase::Long: return new ObjectProxyImpl<int32_t>(this, desc);
+//        case ObjectBase::Short: return new ObjectProxyImpl<int16_t>(this, desc);
         case ObjectBase::Char: return new ObjectProxyImpl<char>(this, desc);
-        case ObjectBase::ULong: return new ObjectProxyImpl<uint32_t>(this, desc);
-        case ObjectBase::UShort: return new ObjectProxyImpl<uint16_t>(this, desc);
-        case ObjectBase::UChar: return new ObjectProxyImpl<uint8_t>(this, desc);
+//        case ObjectBase::ULong: return new ObjectProxyImpl<uint32_t>(this, desc);
+//        case ObjectBase::UShort: return new ObjectProxyImpl<uint16_t>(this, desc);
+//        case ObjectBase::UChar: return new ObjectProxyImpl<uint8_t>(this, desc);
         case ObjectBase::Float: return new ObjectProxyImpl<float>(this, desc);
-        case ObjectBase::SChar: return new ObjectProxyImpl<int8_t>(this, desc);
+//        case ObjectBase::SChar: return new ObjectProxyImpl<int8_t>(this, desc);
 
         case ObjectBase::String: return new ObjectProxyImpl<QString>(this, desc);
         case ObjectBase::Common: return new ObjectProxyImpl<QByteArray>(this, desc);
         case ObjectBase::Variant: return new ObjectProxyImpl<QVariant>(this, desc);
+
+        case ObjectBase::Image: return new ObjectProxyImpl<QImage>(this, desc);
 
         default: return nullptr;
     }

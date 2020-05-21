@@ -3,7 +3,7 @@
 
 #include "ui/properties/AbstractMetaDescription.h"
 #include "Module/ComponentProxyONB.h"
-#include "Protocol/ObjectInfo.h"
+#include "Protocol/ObjectBase.h"
 
 #include <QJsonObject>
 

@@ -6,7 +6,8 @@
 #include <QImage>
 #include <QDynamicPropertyChangeEvent>
 #include "ObjectProxy.h"
-#include "Protocol/onbobject.h"
+#include "Protocol/xoTypes.h"
+#include "Protocol/xoImage.h"
 #include "Protocol/ONBPacket.h"
 #include <QDebug>
 #include "xoCore_global.h"
