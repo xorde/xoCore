@@ -67,6 +67,11 @@ bool ObjectProxy::link(ObjectProxy *publisher, ObjectProxy *subscriber)
     ObjectDescription &pubDesc = publisher->m_description;
     ObjectDescription &subDesc = subscriber->m_description;
 
+    qDebug() << "[ObjectProxy] LINK"
+             << publisher->name() << "(" << publisher->typeName() << "," << publisher->RMIP << "ms )"
+             << "->"
+             << subscriber->name() << "(" << subscriber->typeName() << "," << subscriber->RMIP << "ms )";
+
     if (/*(pubDesc.size || pubDesc.type == Common) &&*/
         (pubDesc.type == subDesc.type)
          /*   && (pubDesc.size == subDesc.size || pubDesc.type == ObjectBase::Integer || pubDesc.type == ObjectBase::UInteger)*/ )
