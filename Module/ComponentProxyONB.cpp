@@ -235,9 +235,11 @@ void ComponentProxyONB::subscribe(QString name, int period_ms)
     ObjectProxy *obj = m_objectMap[name];
     if (obj->isVolatile() && obj->isWritable())
     {
+        obj->m_autoPeriodMs = period_ms;
+        obj->m_needTimestamp = (obj->RMIP > 0) || (obj->m_autoPeriodMs > 0);
+
         if (m_busType == BusSwonb || m_busType == BusRadio)
         {
-            obj->m_autoPeriodMs = period_ms;
             obj->mAutoRequestTimer = new QTimer(obj);
             connect(obj->mAutoRequestTimer, &QTimer::timeout, obj, &ObjectProxy::request);
             obj->mAutoRequestTimer->start(obj->m_autoPeriodMs);
@@ -247,6 +249,7 @@ void ComponentProxyONB::subscribe(QString name, int period_ms)
             QByteArray ba;
             ba.append(reinterpret_cast<const char*>(&period_ms), sizeof(int));
             ba.append(obj->id);
+            qDebug() << "[ComponentProxyONB] subscribe to" << obj->name() << "(" << period_ms << "ms" << (obj->m_needTimestamp? "with timestamp)" : ")");
             if (obj->m_needTimestamp)
                 sendServiceMessage(svcTimedRequest, ba);
             else
@@ -260,6 +263,8 @@ void ComponentProxyONB::unsubscribe(QString name)
     if (!m_objectMap.contains(name))
         return;
     ObjectProxy *obj = m_objectMap[name];
+
+    obj->m_needTimestamp = obj->RMIP > 0;
 
     if (m_busType == BusSwonb || m_busType == BusRadio)
     {
