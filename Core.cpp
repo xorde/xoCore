@@ -4,7 +4,10 @@
 #include "fileutilities.h"
 
 #include <QApplication>
+#include <QLocalServer>
+#include <QLocalSocket>
 #include <QPluginLoader>
+#include <QMessageBox>
 
 QString Core::FolderConfigs = "xoConfigs/";
 QString Core::FolderSchemes = "xoSchemes/";
@@ -171,6 +174,21 @@ void Core::init(QString launchConfigPath)
 
     loader = new Loader(m_server, m_hub, this);
     loader->load(launchConfigPath);
+
+    auto localServer = new QLocalServer(this);
+    if(!localServer->listen("xorde_local"))
+    {
+        QMessageBox::critical(nullptr, "Server error", "Unable to start server:" + localServer->errorString());
+        localServer->close();
+        return;
+    }
+
+    connect(localServer, &QLocalServer::newConnection, this, [=]()
+    {
+        auto socket = localServer->nextPendingConnection();
+        connect(socket, &QLocalSocket::disconnected, socket, &QLocalSocket::deleteLater);
+        connect(socket, &QLocalSocket::readyRead, socket, [=](){ if(socket->readAll() == "close") QCoreApplication::quit(); });
+    });
 }
 
 Server *Core::getServer()
