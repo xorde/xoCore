@@ -38,6 +38,7 @@ void Loader::load(QString launchConfigPath)
 
         hub->addModule(module);
 
+        
         connect(module, &ModuleProxyONB::ready, module, [=]() { hub->checkCurrentSchemeComponents(); }, Qt::QueuedConnection);
 
         QString configsPath = Core::FolderConfigs + module->name();

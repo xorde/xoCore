@@ -15,6 +15,7 @@ QString Core::FolderPlugins = "xoPlugins/";
 QString Core::FolderModules = "xoModules/";
 QString Core::FolderCorePlugins = "xoCorePlugins/";
 QString Core::FolderLaunchers = "xoLaunchers/";
+QString Core::FolderScripts = "xoScripts/";
 
 #ifdef Q_OS_WIN
 
@@ -54,6 +55,8 @@ const QString Core::FileExtensionScheme = "scheme";
 const QString Core::FileExtensionSchemeDot = "." + Core::FileExtensionScheme;
 const QString Core::FileExtensionConfig = "config";
 const QString Core::FileExtensionConfigDot = "." + Core::FileExtensionConfig;
+const QString Core::FileExtensionScript = "script";
+const QString Core::FileExtensionScriptDot = "." + Core::FileExtensionScript;
 
 Core::Core(QObject *parent) : QObject(parent)
 {
@@ -154,12 +157,14 @@ void Core::init(QString launchConfigPath)
     FolderModules.prepend(appPath);
     FolderCorePlugins.prepend(appPath);
     FolderLaunchers.prepend(appPath);
+    FolderScripts.prepend(appPath);
 
     FileUtilities::createIfNotExists(FolderConfigs);
     FileUtilities::createIfNotExists(FolderSchemes);
     FileUtilities::createIfNotExists(FolderPlugins);
     FileUtilities::createIfNotExists(FolderModules);
     FileUtilities::createIfNotExists(FolderLaunchers);
+    FileUtilities::createIfNotExists(FolderScripts);
 
     m_server = new Server(this);
     m_server->startListening();
