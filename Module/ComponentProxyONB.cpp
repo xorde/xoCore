@@ -23,6 +23,7 @@ ComponentProxyONB::ComponentProxyONB(unsigned short componentID, QObject *parent
     bindSvcObject(m_releaseInfo);
     bindSvcObject(m_hardwareInfo);
     bindSvcObject(m_burnCount);
+
     bindSvcObject(m_objectCount);
     bindSvcObject(m_busType);
     bindSvcObject(m_className);
@@ -32,7 +33,6 @@ ComponentProxyONB::ComponentProxyONB(unsigned short componentID, QObject *parent
 ComponentProxyONB::~ComponentProxyONB()
 {
     qDeleteAll(m_objects);
-    qDeleteAll(m_svcObjects);
 }
 
 QJsonObject ComponentProxyONB::getInfoJson() const
