@@ -108,6 +108,8 @@ void Hub::addModule(ModuleProxyONB *module)
 
 void Hub::removeModule(QString name)
 {
+    if(!modulesByName.contains(name)) return;
+
     auto module = modulesByName.take(name);
     emit componentKilled(module);
     module->disconnect();
