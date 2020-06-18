@@ -126,6 +126,8 @@ void Hub::removeModule(QString name)
 
 void Hub::setIsEnabled(bool enabled)
 {
+    if (m_isEnabled == enabled) return;
+
     m_isEnabled = enabled;
 
     emit enableChanged(enabled);
