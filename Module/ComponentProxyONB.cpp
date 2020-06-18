@@ -156,9 +156,21 @@ void ComponentProxyONB::setInput(QString name, QVariant value)
         return;
     ObjectProxy *obj = m_objectMap[name];
     obj->setValue(value);
+    setProperty(name.toUtf8(), value);
 }
 
 QVariant ComponentProxyONB::getOutput(QString name)
+{
+    if (!m_objectMap.contains(name))
+        return QVariant();
+    ObjectProxy *obj = m_objectMap[name];
+    QVariant v = obj->value();
+    // TODO: implement internal property setting without event firing!!
+    setProperty(name.toUtf8(), v);
+    return v;
+}
+
+QVariant ComponentProxyONB::getInput(QString name)
 {
     if (!m_objectMap.contains(name))
         return QVariant();

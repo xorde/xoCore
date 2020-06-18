@@ -15,6 +15,7 @@ public:
     virtual bool loadFromQVariantMap(const QVariantMap &map) override;
 
     void setClassName(QString name);
+    void setReadOnly(bool isReadOnly = true);
 
     virtual QString getClassName() override;
 

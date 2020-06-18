@@ -50,9 +50,10 @@ public:
 //    ObjectProxy* getOutputObject(QString inputName);
 
     //! fill the buffer of the input with given value.
-    void setInput(QString name, QVariant value);
+    Q_INVOKABLE void setInput(QString name, QVariant value);
     //! get last buffered output from component.
     Q_INVOKABLE QVariant getOutput(QString name);
+    Q_INVOKABLE QVariant getInput(QString name);
     Q_INVOKABLE QVariant getSetting(QString name);
 
     //! send object to remote component.
@@ -93,7 +94,7 @@ public:
 
     void extractPrototype(ComponentProxyONB *proto) const;
 
-    bool isFactory() const {return m_isFactory;}
+    bool isFactory() const { return m_isFactory; }
 
 signals:
     void ready();
@@ -103,6 +104,7 @@ signals:
 
 public slots:
     void requestInfo();
+
 
 private:
     QVector<ObjectProxy*> m_objects;

@@ -17,9 +17,14 @@ public:
     virtual AbstractMetaDescriptor *metaDescriptor() override;
     QList<ObjectProxy *> channels;
 
-    QString name() { return m_objectName; }
+    QString name();
+
+    bool getIsReadOnly();
 
 private:
+
+    bool m_isReadOnly = false;
+
     ONBMetaDescriptor* m_metaDescriptor = nullptr;
     QString m_objectName = "";
     ConnectionHelper m_channelConnections;

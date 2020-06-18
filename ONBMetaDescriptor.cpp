@@ -50,6 +50,14 @@ void ONBMetaDescriptor::setClassName(QString name)
     m_objectName = name;
 }
 
+void ONBMetaDescriptor::setReadOnly(bool isReadOnly)
+{
+    for(AbstractMetaDescription* property : m_properties)
+    {
+        property->setIsReadOnly(isReadOnly);
+    }
+}
+
 QString ONBMetaDescriptor::getClassName()
 {
     return m_objectName;

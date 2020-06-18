@@ -7,7 +7,12 @@ ONBSettings::ONBSettings(ComponentProxyONB *component, ONBChannelType channelTyp
     switch (channelType)
     {
     case Inputs: channels = component->getInputs(); break;
-    case Outputs: channels = component->getOutputs(); break;
+    case Outputs:
+    {
+        channels = component->getOutputs();
+        m_isReadOnly = true;
+        break;
+    }
     default: channels = component->getSettings(); break;
     }
 
@@ -28,6 +33,7 @@ AbstractMetaDescriptor *ONBSettings::metaDescriptor()
         m_metaDescriptor->set(this);
         m_metaDescriptor->setClassName(m_objectName);
 
+
         //        foreach(auto desc, m_metaDescriptor->getProperties())
         //        {
         //            m_channelConnections << connect(desc, &AbstractMetaDescription::valueChanged, [=]()
@@ -37,5 +43,12 @@ AbstractMetaDescriptor *ONBSettings::metaDescriptor()
         //            });
         //        }
     }
+
+    m_metaDescriptor->setReadOnly(m_isReadOnly);
+
     return m_metaDescriptor;
 }
+
+QString ONBSettings::name() { return m_objectName; }
+
+bool ONBSettings::getIsReadOnly() { return m_isReadOnly; }
