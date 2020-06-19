@@ -194,6 +194,7 @@ ModuleProxyONB *Hub::getModuleByName(const QString &name)
 
 ComponentProxyONB *Hub::getComponentByName(QString name)
 {
+    qDebug() << componentsByName;
     return componentsByName.contains(name) ? componentsByName[name] : nullptr;
 }
 
@@ -304,10 +305,12 @@ void Hub::reloadComponentSettingsFromScheme(ComponentInfo *info)
 void Hub::linkComponentConnections(ComponentProxyONB *component, bool shouldConnect)
 {
     for(auto&& output : component->getOutputs())
-        for(auto connection : m_scheme->connectionsByOutput[component->componentName() + "_" + output->name()])
-            linkConnection(connection, shouldConnect);
+        if(m_scheme->connectionsByOutput.contains(component->componentName() + "_" + output->name()))
+            for(auto connection : m_scheme->connectionsByOutput[component->componentName() + "_" + output->name()])
+                linkConnection(connection, shouldConnect);
 
     for(auto&& input : component->getInputs())
-        for(auto connection : m_scheme->connectionsByInput[component->componentName() + "_" + input->name()])
-            linkConnection(connection, shouldConnect);
+        if(m_scheme->connectionsByInput.contains(component->componentName() + "_" + input->name()))
+            for(auto connection : m_scheme->connectionsByInput[component->componentName() + "_" + input->name()])
+                linkConnection(connection, shouldConnect);
 }
