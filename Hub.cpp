@@ -305,12 +305,18 @@ void Hub::reloadComponentSettingsFromScheme(ComponentInfo *info)
 void Hub::linkComponentConnections(ComponentProxyONB *component, bool shouldConnect)
 {
     for(auto&& output : component->getOutputs())
-        if(m_scheme->connectionsByOutput.contains(component->componentName() + "_" + output->name()))
-            for(auto connection : m_scheme->connectionsByOutput[component->componentName() + "_" + output->name()])
+    {
+        QString fullOutputName = component->componentName() + "_" + output->name();
+        if(m_scheme->connectionsByOutput.contains(fullOutputName))
+            for(auto connection : m_scheme->connectionsByOutput[fullOutputName])
                 linkConnection(connection, shouldConnect);
+    }
 
     for(auto&& input : component->getInputs())
-        if(m_scheme->connectionsByInput.contains(component->componentName() + "_" + input->name()))
-            for(auto connection : m_scheme->connectionsByInput[component->componentName() + "_" + input->name()])
+    {
+        QString fullInputName = component->componentName() + "_" + input->name();
+        if(m_scheme->connectionsByInput.contains(fullInputName))
+            for(auto connection : m_scheme->connectionsByInput[fullInputName])
                 linkConnection(connection, shouldConnect);
+    }
 }
