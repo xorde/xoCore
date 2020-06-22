@@ -194,9 +194,9 @@ bool Scheme::renameComponentByName(QString componentName,QString newName)
 {
     if (components.contains(componentName))
     {
-        auto component = components[componentName];
-        componentName = newName;
+        auto component = components[componentName];        
         components.remove(componentName);
+        component->name = newName;
         components.insert(newName, component);
 
         bool anyConnections = false;
