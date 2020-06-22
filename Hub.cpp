@@ -194,7 +194,6 @@ ModuleProxyONB *Hub::getModuleByName(const QString &name)
 
 ComponentProxyONB *Hub::getComponentByName(QString name)
 {
-    qDebug() << componentsByName;
     return componentsByName.contains(name) ? componentsByName[name] : nullptr;
 }
 

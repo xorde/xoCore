@@ -11,20 +11,6 @@ ObjectProxy::~ObjectProxy()
 {
 }
 
-//void ObjectProxy::setDescription(const ObjectDescription &desc)
-//{
-//    if (desc.type == m_description.type && desc.size == m_description.size)
-//    {
-//        m_description = desc;
-//    }
-//    else
-//    {
-//        destroyBuffers();
-//        m_description = desc;
-//        allocateBuffers();
-//    }
-//}
-
 bool ObjectProxy::isValid()
 {
     return m_description.isValid();
@@ -60,7 +46,6 @@ QJsonObject ObjectProxy::getDescriptionJSON() const
         json["options"] = m_options;
     return json;
 }
-
 
 bool ObjectProxy::link(ObjectProxy *publisher, ObjectProxy *subscriber)
 {
@@ -113,7 +98,6 @@ void ObjectProxy::send()
 {
     if (mLinkedPublisher && (type() != mLinkedPublisher->type()))
     {
-//        qDebug() << "[ObjectProxy] Performing type conversion...";
         setValue(mLinkedPublisher->value());
     }
     if (m_needTimestamp)

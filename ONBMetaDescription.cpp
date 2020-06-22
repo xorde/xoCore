@@ -117,6 +117,7 @@ bool ONBMetaDescription::setValue(const QVariant &value)
     if (!object) return false;
     object->setValue(value);
     emit object->valueChanged();
+
     return true;
 }
 

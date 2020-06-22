@@ -25,7 +25,7 @@ QJsonObject ONBMetaDescriptor::saveToJson()
     for(AbstractMetaDescription* property : m_properties)
     {
         if (property->changeable)
-        map.insert(property->name, qobject_cast<ONBMetaDescription*>(property)->toJsonObject());
+            map.insert(property->name, qobject_cast<ONBMetaDescription*>(property)->toJsonObject());
     }
     return QJsonObject::fromVariantMap(map);
 }

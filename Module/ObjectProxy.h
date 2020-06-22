@@ -15,7 +15,6 @@ class XOCORESHARED_EXPORT ObjectProxy : public QObject, virtual public ObjectBas
     Q_OBJECT
 
 public:
-//    ObjectProxy(ComponentProxyONB *component, const ObjectDescription &desc);
     virtual ~ObjectProxy() override;
 
     bool isValid();
@@ -33,10 +32,7 @@ public:
     QString hint() const {return m_hint;}
     QString unit() const {return m_unit;}
     QString options() const {return m_options;}
-    QStringList enumList() const
-    {
-        return m_enum;
-    }
+    QStringList enumList() const { return m_enum; }
 
     static bool link(ObjectProxy *publisher, ObjectProxy *subscriber);
     static bool unlink(ObjectProxy *publisher, ObjectProxy *subscriber);
@@ -57,16 +53,13 @@ protected:
     void receiveEvent() override {emit received();}
     void changeEvent() override {emit valueChanged();}
 
-    //! @todo: recreate ObjectProxy for the given id instead of this:
-//    void setDescription(const ObjectDescription &desc);
-
     virtual bool linkTo(const ObjectProxy *publisher) = 0;
     virtual void unlink() = 0;
 
     virtual QVariant getMeta(MetaValue) const {return QVariant();}
 
 private:
-    ComponentProxyONB *mComponent;
+    ComponentProxyONB *mComponent = nullptr;
     QTimer *mAutoRequestTimer = nullptr;
     ObjectProxy *mLinkedPublisher = nullptr;
 
