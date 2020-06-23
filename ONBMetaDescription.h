@@ -12,6 +12,8 @@ class XOCORESHARED_EXPORT ONBMetaDescription : public AbstractMetaDescription
     Q_OBJECT
 public:
     explicit ONBMetaDescription(ObjectProxy *object, QObject *parent = nullptr);
+    ONBMetaDescription(ONBMetaDescription& description) = delete;
+    ONBMetaDescription& operator=(ONBMetaDescription& description) = delete;
 
     virtual QMetaEnum enumerator() override;
     virtual bool isEnumType() override;

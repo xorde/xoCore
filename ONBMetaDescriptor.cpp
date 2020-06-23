@@ -9,14 +9,8 @@ void ONBMetaDescriptor::set(QObject *object)
 {
     auto settings = qobject_cast<ONBSettings*>(object);
 
-    if (settings)
-    {
-        for(auto& channel : settings->channels)
-        {
-            auto description = new ONBMetaDescription(channel);
-            m_properties << description;
-        }
-    }
+    if (!settings) return;
+    for(auto& channel : settings->channels) m_properties << new ONBMetaDescription(channel);
 }
 
 QJsonObject ONBMetaDescriptor::saveToJson()

@@ -7,22 +7,12 @@ ONBSettings::ONBSettings(ComponentProxyONB *component, ONBChannelType channelTyp
     switch (channelType)
     {
         case Inputs: channels = component->getInputs(); break;
-        case Outputs:
-        {
-            channels = component->getOutputs();
-            m_isReadOnly = true;
-            break;
-        }
-        default: channels = component->getSettings(); break;
+        case Outputs: channels = component->getOutputs(); m_isReadOnly = true; break;
+        case Settings: channels = component->getSettings(); break;
     }
 
-    foreach(auto channel, channels)
-    {
-        m_channelConnections << connect(channel, &ObjectProxy::valueChanged, [=]()
-        {
-            emit propertyChanged(channel->name());
-        });
-    }
+    for(auto channel : channels)
+        connect(channel, &ObjectProxy::valueChanged, this, [=]() { emit propertyChanged(channel->name()); });
 }
 
 AbstractMetaDescriptor *ONBSettings::metaDescriptor()

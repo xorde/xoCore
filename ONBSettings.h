@@ -27,7 +27,6 @@ private:
 
     ONBMetaDescriptor* m_metaDescriptor = nullptr;
     QString m_objectName = "";
-    ConnectionHelper m_channelConnections;
 
 };
 
