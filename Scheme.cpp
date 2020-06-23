@@ -228,9 +228,7 @@ bool Scheme::renameComponentByName(QString componentName,QString newName)
 
 bool Scheme::removeComponentByName(QString componentName)
 {
-    auto component = components[componentName];
-
-    components.remove(componentName);
+    auto component = components.take(componentName);
     componentCountByModule[component->parentModule]--;
     if(componentCountByModule[component->parentModule] == 0) componentCountByModule.remove(component->parentModule);
 
@@ -292,8 +290,5 @@ void Scheme::clear(bool sendSignals)
 void Scheme::reload()
 {
     auto path = getLastLoadedPath();
-    if (!path.isEmpty() && QFile::exists(path))
-    {
-        load(getLastLoadedPath());
-    }
+    if (!path.isEmpty() && QFile::exists(path)) load(path);
 }
