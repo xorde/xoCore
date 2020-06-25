@@ -75,10 +75,6 @@ ONBMetaDescription::ONBMetaDescription(ObjectProxy *object, QObject *parent) : A
 
         }
     }
-    else if (typeName == "string")
-    {
-
-    }
 
     object->request();
     connect(object, SIGNAL(valueChanged()), this, SLOT(valueChangedSlot()));
@@ -133,7 +129,6 @@ void ONBMetaDescription::setDefault()
 
 void ONBMetaDescription::valueChangedSlot()
 {
-    //    object->send();
     emit valueChanged(object->value());
 }
 
