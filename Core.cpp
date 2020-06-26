@@ -60,7 +60,7 @@ const QString Core::FileExtensionScriptDot = "." + Core::FileExtensionScript;
 
 Core::Core(QObject *parent) : QObject(parent)
 {
-
+    scriptEngine = new QScriptEngine(this);
 }
 
 Core::~Core()
@@ -209,6 +209,11 @@ Hub *Core::getHub()
 Loader *Core::getLoader()
 {
     return loader;
+}
+
+QScriptEngine *Core::getEngine()
+{
+    return scriptEngine;
 }
 
 Scheme *Core::getScheme()

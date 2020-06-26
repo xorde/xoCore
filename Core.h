@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QJsonObject>
+#include <QtScript/QScriptEngine>
 
 #include "xoCore_global.h"
 
@@ -54,13 +55,13 @@ public:
     Scheme *getScheme();
     Hub *getHub();
     Loader* getLoader();
+    QScriptEngine* getEngine();
 
     bool loadScheme(QString schemePath);
     bool deleteScheme(QString schemePath);
 
     ComponentInfo *createComponentInScheme(QString componentType, QString moduleName);
     bool removeComponentFromScheme(ComponentInfo* componentInfo);
-
 
 private:
     explicit Core(QObject *parent = nullptr);
@@ -70,6 +71,7 @@ private:
     Scheme *m_scheme = nullptr;
     Hub *m_hub = nullptr;
     Loader* loader = nullptr;
+    QScriptEngine* scriptEngine = nullptr;
 
     QMap<QString, int> m_componentCountByModuleName;
 };

@@ -1,4 +1,4 @@
-QT += core websockets network widgets
+QT += core websockets network widgets script
 TARGET = xoCore
 TEMPLATE = lib
 
