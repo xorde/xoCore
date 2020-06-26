@@ -57,6 +57,13 @@ public:
     Loader* getLoader();
     QScriptEngine* getEngine();
 
+    void DEBUG_setEngine(QScriptEngine *engine)
+    {
+        m_scriptEngine = engine;
+    }
+
+    QString executeJavaScript(const QString &text);
+
     bool loadScheme(QString schemePath);
     bool deleteScheme(QString schemePath);
 
@@ -70,8 +77,8 @@ private:
     Server *m_server = nullptr;
     Scheme *m_scheme = nullptr;
     Hub *m_hub = nullptr;
-    Loader* loader = nullptr;
-    QScriptEngine* scriptEngine = nullptr;
+    Loader* m_loader = nullptr;
+    QScriptEngine* m_scriptEngine = nullptr;
 
     QMap<QString, int> m_componentCountByModuleName;
 };

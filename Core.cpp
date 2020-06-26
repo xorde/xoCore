@@ -60,7 +60,7 @@ const QString Core::FileExtensionScriptDot = "." + Core::FileExtensionScript;
 
 Core::Core(QObject *parent) : QObject(parent)
 {
-    scriptEngine = new QScriptEngine(this);
+    m_scriptEngine = new QScriptEngine(this);
 }
 
 Core::~Core()
@@ -93,10 +93,10 @@ ComponentInfo* Core::createComponentInScheme(QString componentType, QString modu
 
     m_scheme->addComponent(componentInfo);
 
-    if(loader->getApplicationStartType(moduleName) == COLD)
+    if(m_loader->getApplicationStartType(moduleName) == COLD)
     {
         m_componentCountByModuleName[moduleName]++;
-        loader->startApplication(moduleName);
+        m_loader->startApplication(moduleName);
     }
 
     return componentInfo;
@@ -104,12 +104,12 @@ ComponentInfo* Core::createComponentInScheme(QString componentType, QString modu
 
 bool Core::removeComponentFromScheme(ComponentInfo *componentInfo)
 {
-    if(loader->getApplicationStartType(componentInfo->parentModule) == COLD)
+    if(m_loader->getApplicationStartType(componentInfo->parentModule) == COLD)
     {
         int& counter = m_componentCountByModuleName[componentInfo->parentModule];
         counter--;
 
-        if(counter == 0) loader->killApplication(componentInfo->parentModule);
+        if(counter == 0) m_loader->killApplication(componentInfo->parentModule);
     }
 
     return m_scheme->removeComponentByName(componentInfo->name);
@@ -177,8 +177,8 @@ void Core::init(QString launchConfigPath)
 
     connect(m_hub, &Hub::enableChanged, this, [=](bool enabled) { GlobalConsole::writeLine(QString("Scheme ") + (enabled ? "started" : "stopped")); }, Qt::QueuedConnection);
 
-    loader = new Loader(m_server, m_hub, this);
-    loader->load(launchConfigPath);
+    m_loader = new Loader(m_server, m_hub, this);
+    m_loader->load(launchConfigPath);
 
     auto localServer = new QLocalServer(this);
     if(!localServer->listen("xorde_local"))
@@ -208,12 +208,21 @@ Hub *Core::getHub()
 
 Loader *Core::getLoader()
 {
-    return loader;
+    return m_loader;
 }
 
 QScriptEngine *Core::getEngine()
 {
-    return scriptEngine;
+    return m_scriptEngine;
+}
+
+QString Core::executeJavaScript(const QString &text)
+{
+    if (m_scriptEngine)
+    {
+        return m_scriptEngine->evaluate(text).toString();
+    }
+    return "?";
 }
 
 Scheme *Core::getScheme()
