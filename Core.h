@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QJsonObject>
-#include <QtScript/QScriptEngine>
 
 #include "xoCore_global.h"
 
@@ -15,6 +14,7 @@
 #include "xoCorePlugin.h"
 #include "PluginManager.h"
 #include "ConfigManager.h"
+#include "ScriptEngineWrapper.h"
 #include "Module/ComponentProxyONB.h"
 
 class XOCORESHARED_EXPORT Core : public QObject
@@ -55,9 +55,9 @@ public:
     Scheme *getScheme();
     Hub *getHub();
     Loader* getLoader();
-    QScriptEngine* getEngine();
+    ScriptEngineWrapper* getEngine();
 
-    void DEBUG_setEngine(QScriptEngine *engine)
+    void DEBUG_setEngine(ScriptEngineWrapper *engine)
     {
         m_scriptEngine = engine;
     }
@@ -70,6 +70,7 @@ public:
     ComponentInfo *createComponentInScheme(QString componentType, QString moduleName);
     bool removeComponentFromScheme(ComponentInfo* componentInfo);
 
+
 private:
     explicit Core(QObject *parent = nullptr);
     virtual ~Core() override;
@@ -78,7 +79,7 @@ private:
     Scheme *m_scheme = nullptr;
     Hub *m_hub = nullptr;
     Loader* m_loader = nullptr;
-    QScriptEngine* m_scriptEngine = nullptr;
+    ScriptEngineWrapper* m_scriptEngine = nullptr;
 
     QMap<QString, int> m_componentCountByModuleName;
 };

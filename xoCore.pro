@@ -29,6 +29,7 @@ SOURCES += \
     Hub.cpp \
     ModuleList.cpp \
     Core.cpp \
+    ScriptEngineWrapper.cpp \
     Server.cpp \
     PluginManager.cpp \
     Module/ComponentProxyONB.cpp \
@@ -39,6 +40,7 @@ SOURCES += \
 
 HEADERS += \
     Loader.h \
+    ScriptEngineWrapper.h \
     xoCore_global.h \
     xoCorePlugin.h \
     ComponentsConfigParser.h \
