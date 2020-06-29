@@ -60,10 +60,7 @@ const QString Core::FileExtensionScriptDot = "." + Core::FileExtensionScript;
 
 Core::Core(QObject *parent) : QObject(parent)
 {
-    setProperty("name", "core");
 
-    m_scriptEngine = new ScriptEngineWrapper(this);
-    m_scriptEngine->addVariable(this);
 }
 
 Core::~Core()
@@ -175,6 +172,11 @@ void Core::init(QString launchConfigPath)
     m_scheme = new Scheme(this);
     connect(m_scheme, &Scheme::loaded, this, [=]() { GlobalConsole::writeLine("Scheme loaded: " + m_scheme->getLastLoadedPath()); }, Qt::QueuedConnection);
 
+    setProperty("name", "core");
+
+    m_scriptEngine = new ScriptEngineWrapper(this);
+    m_scriptEngine->addVariable(this);
+
     m_hub = new Hub(this);
     m_hub->setScheme(m_scheme);
 
@@ -197,6 +199,11 @@ void Core::init(QString launchConfigPath)
         connect(socket, &QLocalSocket::disconnected, socket, &QLocalSocket::deleteLater);
         connect(socket, &QLocalSocket::readyRead, socket, [=](){ if(socket->readAll() == "close") QCoreApplication::quit(); });
     });
+
+    connect(m_hub, &Hub::componentAdded, m_scriptEngine, &ScriptEngineWrapper::addVariable);
+    connect(m_hub, &Hub::componentKilled, m_scriptEngine, &ScriptEngineWrapper::deleteVariable);
+    connect(m_hub, &Hub::componentRenamed, m_scriptEngine, &ScriptEngineWrapper::renameVariable);
+    connect(m_hub, &Hub::componentChanged, m_scriptEngine, &ScriptEngineWrapper::addVariable);
 }
 
 Server *Core::getServer()

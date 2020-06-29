@@ -14,7 +14,7 @@ void ScriptEngineWrapper::addVariable(QObject *variable)
     if (globalObject().property(name).isValid()) // if variable exists
         deleteVariable(variable);
 
-    globalObject().setProperty(name, newQObject(variable));;
+    globalObject().setProperty(name, newQObject(variable));
 }
 
 void ScriptEngineWrapper::deleteVariable(QObject *variable)
@@ -27,5 +27,4 @@ void ScriptEngineWrapper::renameVariable(QString oldName, QString newName)
 {
     globalObject().setProperty(newName, globalObject().property(oldName));
     globalObject().setProperty(oldName, QScriptValue());
-
 }

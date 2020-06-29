@@ -57,11 +57,6 @@ public:
     Loader* getLoader();
     ScriptEngineWrapper* getEngine();
 
-    void DEBUG_setEngine(ScriptEngineWrapper *engine)
-    {
-        m_scriptEngine = engine;
-    }
-
     QString executeJavaScript(const QString &text);
 
     bool loadScheme(QString schemePath);
